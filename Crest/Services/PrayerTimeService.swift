@@ -59,8 +59,13 @@ final class PrayerTimeService {
         let method = CalculationMethodOption(rawValue: methodRaw) ?? .moonsightingCommittee
         let madhab = MadhabOption(rawValue: madhabRaw) ?? .shafi
 
+        let shafaqRaw = UserDefaults.standard.string(forKey: AppSettingsKey.shafaq)
+            ?? AppSettingsDefault.shafaq
+        let shafaq = ShafaqOption(rawValue: shafaqRaw) ?? .general
+
         var params = method.adhanMethod.params
         params.madhab = madhab.adhanMadhab
+        params.shafaq = shafaq.adhanShafaq
 
         let adjustments = loadAdjustments()
         params.adjustments.fajr = adjustments["fajr"] ?? 0

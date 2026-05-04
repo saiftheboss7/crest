@@ -9,6 +9,7 @@ struct IslamicSettingsView: View {
     @AppStorage(AppSettingsKey.islamicModeEnabled) private var islamicModeEnabled = AppSettingsDefault.islamicModeEnabled
     @AppStorage(AppSettingsKey.calculationMethod) private var calculationMethod = AppSettingsDefault.calculationMethod
     @AppStorage(AppSettingsKey.madhab) private var madhab = AppSettingsDefault.madhab
+    @AppStorage(AppSettingsKey.shafaq) private var shafaq = AppSettingsDefault.shafaq
     @AppStorage(AppSettingsKey.hijriDateOffset) private var hijriDateOffset = AppSettingsDefault.hijriDateOffset
     @AppStorage(AppSettingsKey.showHijriInMenuBar) private var showHijriInMenuBar = AppSettingsDefault.showHijriInMenuBar
     @AppStorage(AppSettingsKey.prayerNotificationsEnabled) private var notificationsEnabled = AppSettingsDefault.prayerNotificationsEnabled
@@ -172,6 +173,13 @@ struct IslamicSettingsView: View {
                 }
             }
             .onChange(of: madhab) { _, _ in recomputeAndReschedule() }
+
+            Picker("Shafaq (Isha)", selection: $shafaq) {
+                ForEach(ShafaqOption.allCases) { option in
+                    Text(option.displayName).tag(option.rawValue)
+                }
+            }
+            .onChange(of: shafaq) { _, _ in recomputeAndReschedule() }
         }
     }
 

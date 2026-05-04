@@ -26,6 +26,7 @@ final class PrayerTimeServiceTests: XCTestCase {
             AppSettingsKey.staticLongitude,
             AppSettingsKey.calculationMethod,
             AppSettingsKey.madhab,
+            AppSettingsKey.shafaq,
             AppSettingsKey.jamaatTimesEnabled,
             AppSettingsKey.hijriDateOffset,
         ]
@@ -40,6 +41,7 @@ final class PrayerTimeServiceTests: XCTestCase {
         defaults.set("90.4125", forKey: AppSettingsKey.staticLongitude)
         defaults.set("moonsightingCommittee", forKey: AppSettingsKey.calculationMethod)
         defaults.set("shafi", forKey: AppSettingsKey.madhab)
+        defaults.set("general", forKey: AppSettingsKey.shafaq)
         defaults.set(false, forKey: AppSettingsKey.jamaatTimesEnabled)
         defaults.set(0, forKey: AppSettingsKey.hijriDateOffset)
     }
@@ -130,6 +132,34 @@ final class PrayerTimeServiceTests: XCTestCase {
         service.recompute()
 
         XCTAssertTrue(service.todayPrayers.isEmpty, "Out-of-range latitude must yield empty schedule")
+    }
+
+    func test_recompute_shafaqAbyadShiftsIshaLaterThanGeneral() {
+        let defaults = UserDefaults.standard
+
+        defaults.set("general", forKey: AppSettingsKey.shafaq)
+        let generalService = PrayerTimeService(locationService: LocationService())
+        generalService.recompute()
+        guard let ishaGeneral = generalService.timeForPrayer(.isha) else {
+            return XCTFail("Expected Isha time with Shafaq general")
+        }
+
+        defaults.set("abyad", forKey: AppSettingsKey.shafaq)
+        let abyadService = PrayerTimeService(locationService: LocationService())
+        abyadService.recompute()
+        guard let ishaAbyad = abyadService.timeForPrayer(.isha) else {
+            return XCTFail("Expected Isha time with Shafaq abyad")
+        }
+
+        XCTAssertGreaterThan(
+            ishaAbyad, ishaGeneral,
+            "Shafaq abyad should produce a later Isha than general"
+        )
+        let deltaMinutes = ishaAbyad.timeIntervalSince(ishaGeneral) / 60
+        XCTAssertGreaterThanOrEqual(
+            deltaMinutes, 5,
+            "Expected at least 5 min gap between Shafaq abyad and general — got \(deltaMinutes) min"
+        )
     }
 
     func test_prayerEndTime_followsCanonicalChain() {

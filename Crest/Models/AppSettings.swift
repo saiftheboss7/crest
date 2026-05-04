@@ -37,6 +37,7 @@ enum AppSettingsKey {
     // Islamic Mode
     static let calculationMethod = "calculationMethod"
     static let madhab = "madhab"
+    static let shafaq = "shafaq"
     static let prayerAdjustments = "prayerAdjustments"
     static let hijriDateOffset = "hijriDateOffset"
     static let showHijriInMenuBar = "showHijriInMenuBar"
@@ -77,6 +78,7 @@ enum AppSettingsDefault {
     // Islamic Mode
     static let calculationMethod = "moonsightingCommittee"
     static let madhab = "shafi"
+    static let shafaq = "general"
     static let hijriDateOffset = 0
     static let showHijriInMenuBar = false
     static let prayerNotificationsEnabled = false

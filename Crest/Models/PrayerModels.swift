@@ -147,3 +147,27 @@ enum MadhabOption: String, CaseIterable, Identifiable {
         }
     }
 }
+
+enum ShafaqOption: String, CaseIterable, Identifiable {
+    case general
+    case ahmer
+    case abyad
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .general: return "General"
+        case .ahmer:   return "Ahmer (Red twilight)"
+        case .abyad:   return "Abyad (White twilight)"
+        }
+    }
+
+    var adhanShafaq: Shafaq {
+        switch self {
+        case .general: return .general
+        case .ahmer:   return .ahmer
+        case .abyad:   return .abyad
+        }
+    }
+}
