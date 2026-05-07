@@ -50,7 +50,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.crest.app
-        MARKETING_VERSION: "0.0.4"
+        MARKETING_VERSION: "0.0.5"
         CURRENT_PROJECT_VERSION: "1"
         INFOPLIST_FILE: Crest/Info.plist
         CODE_SIGN_ENTITLEMENTS: Crest/Crest.entitlements
