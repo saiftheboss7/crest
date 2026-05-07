@@ -1,6 +1,18 @@
 {
   "version": 1,
   "skills": {
+    "swift-architecture-skill": {
+      "source": "efremidze/swift-architecture-skill",
+      "sourceType": "github",
+      "skillPath": "swift-architecture-skill/SKILL.md",
+      "computedHash": "67d3359424b19084631998def14666fd5a77284a45ac0353c41a86a7ed216923"
+    },
+    "swift-testing-pro": {
+      "source": "twostraws/swift-testing-agent-skill",
+      "sourceType": "github",
+      "skillPath": "swift-testing-pro/SKILL.md",
+      "computedHash": "90504b29146ccd7e88d8ba7244c6c4e4d2b410fb21bdd4ce578f10583b158481"
+    },
     "swiftui-expert-skill": {
       "source": "avdlee/swiftui-agent-skill",
       "sourceType": "github",

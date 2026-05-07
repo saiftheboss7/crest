@@ -6,8 +6,6 @@ A native macOS menu bar app (no Dock icon) for calendar events, meetings, and pr
 
 - **Language:** Swift 5.9, macOS 14.0+ deployment target
 - **UI:** SwiftUI with `MenuBarExtra` (`.window` style) + AppKit where needed
-- **State:** `@Observable` (Observation framework), `@AppStorage` for persistence
-- **Calendar:** EventKit (`EKEventStore`) — reads system calendars including synced Google Calendar
 - **Prayer math:** [Adhan](https://github.com/batoulapps/adhan-swift) (SPM)
 - **Auto-update:** [Sparkle](https://github.com/sparkle-project/Sparkle) 2.9.x (SPM)
 - **Build system:** Xcode 16.1 project generated via `xcodegen` from `project.yml`
@@ -37,17 +35,13 @@ First-launch calendar permission flow, code signing, and release-build notes liv
 
 ## Skills available in this repo
 
-- **`swiftui-expert-skill`** — at `.agents/skills/swiftui-expert-skill/SKILL.md`. Consult its `references/` (latest-apis, animation, state, macOS, performance, accessibility) for any non-trivial SwiftUI work — new views, refactors, performance, macOS-specific APIs.
+- **`swiftui-expert-skill`**
+- **`swift-architecture-skill`**
+- **`swift-testing-pro`**
 
 ## Key conventions
 
-- **No Xcode GUI.** All project config lives in `project.yml`. Run `xcodegen generate` after any structural change (new files, targets, build settings).
-- **`@Observable` over `ObservableObject`.** Use the Observation framework for all service/state classes.
-- **No `init()` on `CrestApp`.** SwiftUI recreates the `App` struct multiple times. Background services (timers, event monitors) must be initialized in `AppDelegate` via `@NSApplicationDelegateAdaptor`, not in `CrestApp.init()`.
-- **Settings keys** are centralized in `AppSettingsKey` / `AppSettingsDefault` enums in `Crest/Models/AppSettings.swift`. Always add new settings there.
 - **No dock icon.** `LSUIElement = true` in Info.plist — the app lives entirely in the menu bar.
-- **Entitlements** are in `Crest/Crest.entitlements`. Add new capabilities there (e.g., reminders, location).
-- **Meeting link patterns** go in `MeetingLinkDetector.patterns` array.
 - **TestingSettingsView parity.** Whenever a new alert type or sound is added, add a matching test button in `Crest/Views/Settings/TestingSettingsView.swift`. Sound triggers go in the "Sounds" section; visual/window alerts go in the "Alerts" section. Sound trigger methods in services (e.g., `triggerTestAlert`) must call `AlertSoundService` if sound is enabled — never bypass the sound path when simulating a real alert.
 - **Add a regression test when you fix a client-reported bug.** Drop it under `CrestTests/` so the fix can't silently regress. See `.agents/plans/TESTING.md`.
 
