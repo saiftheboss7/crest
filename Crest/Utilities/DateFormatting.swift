@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 enum DateFormatting {
     private static var cachedFormatters: [String: DateFormatter] = [:]
 

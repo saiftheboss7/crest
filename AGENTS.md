@@ -4,11 +4,11 @@ A native macOS menu bar app (no Dock icon) for calendar events, meetings, and pr
 
 ## Tech stack
 
-- **Language:** Swift 5.9, macOS 14.0+ deployment target
+- **Language:** Swift 6 mode (Swift 6 toolchain), macOS 15.0+ deployment target
 - **UI:** SwiftUI with `MenuBarExtra` (`.window` style) + AppKit where needed
 - **Prayer math:** [Adhan](https://github.com/batoulapps/adhan-swift) (SPM)
 - **Auto-update:** [Sparkle](https://github.com/sparkle-project/Sparkle) 2.9.x (SPM)
-- **Build system:** Xcode 16.1 project generated via `xcodegen` from `project.yml`
+- **Build system:** Xcode 16.4 project generated via `xcodegen` from `project.yml`
 
 ## Build & run
 

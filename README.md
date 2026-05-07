@@ -107,7 +107,7 @@ Location is used only for prayer time calculation and is never sent off-device.
 
 ## Tech Stack
 
-- Swift 5.9 / SwiftUI
+- Swift 6.2 / SwiftUI
 - EventKit for calendar access
 - CoreLocation for prayer time calculation
 - [Adhan](https://github.com/batoulapps/adhan-swift) for prayer time computation

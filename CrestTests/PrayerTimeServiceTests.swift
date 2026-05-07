@@ -9,12 +9,12 @@ import XCTest
 ///
 /// Time-of-day–dependent logic (current vs next prayer, highlight countdown,
 /// snooze, jamaat reschedule) is not unit-tested — see `.agents/plans/TESTING.md` § 3.
+@MainActor
 final class PrayerTimeServiceTests: XCTestCase {
 
     private var savedKeys: [(key: String, value: Any?)] = []
 
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
         savedKeys = []
         let defaults = UserDefaults.standard
 
@@ -46,7 +46,7 @@ final class PrayerTimeServiceTests: XCTestCase {
         defaults.set(0, forKey: AppSettingsKey.hijriDateOffset)
     }
 
-    override func tearDown() {
+    override func tearDown() async throws {
         let defaults = UserDefaults.standard
         for (key, value) in savedKeys {
             if let value {
@@ -56,7 +56,6 @@ final class PrayerTimeServiceTests: XCTestCase {
             }
         }
         savedKeys = []
-        super.tearDown()
     }
 
     func test_recompute_producesAllSixDailyPrayerEntries() {

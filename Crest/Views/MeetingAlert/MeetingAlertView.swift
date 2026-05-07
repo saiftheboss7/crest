@@ -48,7 +48,9 @@ struct MeetingAlertView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-                currentTime = Date()
+                Task { @MainActor in
+                    currentTime = Date()
+                }
             }
             if let timer { RunLoop.main.add(timer, forMode: .common) }
         }

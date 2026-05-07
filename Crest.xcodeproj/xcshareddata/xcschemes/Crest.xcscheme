@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1610"
+   LastUpgradeVersion = "1640"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -35,6 +35,20 @@
                ReferencedContainer = "container:Crest.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "0C66C0CFCCED47BD71D21EF2"
+               BuildableName = "CrestUITests.xctest"
+               BlueprintName = "CrestUITests"
+               ReferencedContainer = "container:Crest.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -61,6 +75,17 @@
                BlueprintIdentifier = "412EB9963F05DC0CBBBC33B0"
                BuildableName = "CrestTests.xctest"
                BlueprintName = "CrestTests"
+               ReferencedContainer = "container:Crest.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "0C66C0CFCCED47BD71D21EF2"
+               BuildableName = "CrestUITests.xctest"
+               BlueprintName = "CrestUITests"
                ReferencedContainer = "container:Crest.xcodeproj">
             </BuildableReference>
          </TestableReference>

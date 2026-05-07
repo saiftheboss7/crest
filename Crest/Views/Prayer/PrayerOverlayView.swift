@@ -222,12 +222,14 @@ struct PrayerOverlayView: View {
     }
 
     private func startCountdown() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            let remaining = Int(max(0, prayerTime.timeIntervalSince(Date())))
-            remainingSeconds = remaining
-            if let endTime = prayerEndTime {
-                let endRemaining = Int(max(0, endTime.timeIntervalSince(Date())))
-                endRemainingSeconds = endRemaining
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [prayerTime, prayerEndTime] _ in
+            Task { @MainActor in
+                let remaining = Int(max(0, prayerTime.timeIntervalSince(Date())))
+                remainingSeconds = remaining
+                if let endTime = prayerEndTime {
+                    let endRemaining = Int(max(0, endTime.timeIntervalSince(Date())))
+                    endRemainingSeconds = endRemaining
+                }
             }
         }
         RunLoop.main.add(timer!, forMode: .common)

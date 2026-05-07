@@ -1,7 +1,7 @@
 import AppKit
 import Observation
 
-@Observable
+@MainActor @Observable
 final class GlobalShortcutService {
     private let meetingAlertService: MeetingAlertService
     private var globalMonitor: Any?
@@ -15,10 +15,6 @@ final class GlobalShortcutService {
     init(meetingAlertService: MeetingAlertService) {
         self.meetingAlertService = meetingAlertService
         registerShortcuts()
-    }
-
-    deinit {
-        unregisterShortcuts()
     }
 
     func registerShortcuts() {

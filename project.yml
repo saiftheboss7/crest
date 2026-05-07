@@ -2,8 +2,8 @@ name: Crest
 options:
   bundleIdPrefix: com.crest
   deploymentTarget:
-    macOS: "14.0"
-  xcodeVersion: "16.1"
+    macOS: "15.0"
+  xcodeVersion: "16.4"
   generateEmptyDirectories: true
 
 packages:
@@ -16,8 +16,8 @@ packages:
 
 settings:
   base:
-    SWIFT_VERSION: "5.9"
-    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    SWIFT_VERSION: "6"
+    MACOSX_DEPLOYMENT_TARGET: "15.0"
 
 targets:
   Crest:
@@ -61,7 +61,7 @@ targets:
   CrestTests:
     type: bundle.unit-test
     platform: macOS
-    deploymentTarget: "14.0"
+    deploymentTarget: "15.0"
     sources:
       - path: CrestTests
     dependencies:
@@ -73,7 +73,24 @@ targets:
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Crest.app/Contents/MacOS/Crest"
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "-"
-        SWIFT_VERSION: "5.9"
+        SWIFT_VERSION: "6"
+        GENERATE_INFOPLIST_FILE: YES
+
+  CrestUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: CrestUITests
+    dependencies:
+      - target: Crest
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.crest.app.uitests
+        TEST_TARGET_NAME: Crest
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
+        SWIFT_VERSION: "6"
         GENERATE_INFOPLIST_FILE: YES
 
 schemes:
@@ -82,12 +99,14 @@ schemes:
       targets:
         Crest: all
         CrestTests: [test]
+        CrestUITests: [test]
     run:
       config: Debug
     test:
       config: Debug
       targets:
         - CrestTests
+        - CrestUITests
     profile:
       config: Release
     analyze:

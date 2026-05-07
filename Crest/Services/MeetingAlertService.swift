@@ -1,8 +1,8 @@
-import EventKit
+@preconcurrency import EventKit
 import Observation
 import AppKit
 
-@Observable
+@MainActor @Observable
 final class MeetingAlertService {
     private let calendarService: CalendarService
     private var scheduledTimers: [String: Timer] = [:]
@@ -29,11 +29,6 @@ final class MeetingAlertService {
         self.calendarService = calendarService
         startPeriodicRefresh()
         scheduleAlerts()
-    }
-
-    deinit {
-        refreshTimer?.invalidate()
-        scheduledTimers.values.forEach { $0.invalidate() }
     }
 
     func nextMeetingLink() -> (event: EKEvent, link: MeetingLink)? {
@@ -80,7 +75,7 @@ final class MeetingAlertService {
             guard interval > 0 else { continue }
 
             let timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { [weak self] _ in
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     self?.fireMeetingAlert(for: event)
                 }
             }
@@ -174,7 +169,7 @@ final class MeetingAlertService {
         alertWindow = nil
         let delay = TimeInterval(minutes * 60)
         let timer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self?.showAlertWindow(event: event, meetingLink: meetingLink)
             }
         }
@@ -184,7 +179,7 @@ final class MeetingAlertService {
 
     private func startPeriodicRefresh() {
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self?.cleanupDismissedEvents()
                 self?.scheduleAlerts()
             }

@@ -54,7 +54,7 @@ struct CrestApp: App {
     private var resolvedPrayerTimeService: PrayerTimeService {
         if let existing = prayerTimeService { return existing }
         let service = PrayerTimeService(locationService: locationService)
-        DispatchQueue.main.async { prayerTimeService = service }
+        Task { @MainActor in prayerTimeService = service }
         return service
     }
 }

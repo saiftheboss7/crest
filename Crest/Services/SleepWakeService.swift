@@ -1,6 +1,7 @@
 import Foundation
 import AppKit
 
+@MainActor
 final class SleepWakeService {
     private let prayerTimeService: PrayerTimeService
     private let prayerOverlayService: PrayerOverlayService
@@ -31,8 +32,8 @@ final class SleepWakeService {
         NSWorkspace.shared.notificationCenter.removeObserver(self)
     }
 
-    @objc private func handleWake() {
-        DispatchQueue.main.async { [weak self] in
+    @objc nonisolated private func handleWake() {
+        Task { @MainActor [weak self] in
             guard let self else { return }
             self.prayerTimeService.recompute()
             self.prayerOverlayService.handleWake()

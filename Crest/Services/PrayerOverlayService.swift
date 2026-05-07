@@ -2,7 +2,7 @@ import Foundation
 import Observation
 import AppKit
 
-@Observable
+@MainActor @Observable
 final class PrayerOverlayService {
     private let prayerTimeService: PrayerTimeService
     private var scheduledTimers: [String: Timer] = [:]
@@ -23,11 +23,6 @@ final class PrayerOverlayService {
         self.prayerTimeService = prayerTimeService
         startPeriodicRefresh()
         scheduleOverlays()
-    }
-
-    deinit {
-        refreshTimer?.invalidate()
-        scheduledTimers.values.forEach { $0.invalidate() }
     }
 
     func scheduleOverlays() {
@@ -52,7 +47,7 @@ final class PrayerOverlayService {
 
             let delay = fireTime.timeIntervalSince(now)
             let timer = Timer.scheduledTimer(withTimeInterval: max(delay, 0.1), repeats: false) { [weak self] _ in
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     self?.fireOverlay(for: prayer, triggerTime: fireTime)
                 }
             }
@@ -77,7 +72,7 @@ final class PrayerOverlayService {
         activePrayer = nil
 
         let snoozeTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(minutes * 60), repeats: false) { [weak self] _ in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 guard let self else { return }
                 self.fireOverlay(for: prayer, triggerTime: Date())
             }
@@ -185,7 +180,7 @@ final class PrayerOverlayService {
 
     private func startPeriodicRefresh() {
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self?.cleanupDismissed()
                 self?.scheduleOverlays()
             }

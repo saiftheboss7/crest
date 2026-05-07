@@ -2,7 +2,7 @@ import Foundation
 import Observation
 import Adhan
 
-@Observable
+@MainActor @Observable
 final class PrayerTimeService {
     private let locationService: LocationService
     private var timer: Timer?
@@ -29,10 +29,6 @@ final class PrayerTimeService {
         self.locationService = locationService
         recompute()
         startTimer()
-    }
-
-    deinit {
-        timer?.invalidate()
     }
 
     func recompute() {
@@ -232,13 +228,15 @@ final class PrayerTimeService {
 
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let self else { return }
-            self.updateCurrentNext()
+            Task { @MainActor in
+                guard let self else { return }
+                self.updateCurrentNext()
 
-            let cal = Calendar(identifier: .gregorian)
-            let today = cal.component(.day, from: Date())
-            if today != self.lastComputedDay {
-                self.recompute()
+                let cal = Calendar(identifier: .gregorian)
+                let today = cal.component(.day, from: Date())
+                if today != self.lastComputedDay {
+                    self.recompute()
+                }
             }
         }
         RunLoop.main.add(timer!, forMode: .common)
@@ -265,8 +263,8 @@ final class PrayerTimeService {
         return locationService.coordinates
     }
 
-    func formattedCountdown() -> String {
-        let total = Int(countdownToNext)
+    static func formatCountdown(_ seconds: TimeInterval) -> String {
+        let total = max(0, Int(seconds))
         let hours = total / 3600
         let minutes = (total % 3600) / 60
         if hours > 0 {
@@ -276,16 +274,16 @@ final class PrayerTimeService {
         }
     }
 
+    static func formatHighlightCountdown(_ seconds: TimeInterval, isActive: Bool) -> String {
+        let timeString = formatCountdown(seconds)
+        return isActive ? "\(timeString) left" : "in \(timeString)"
+    }
+
+    func formattedCountdown() -> String {
+        Self.formatCountdown(countdownToNext)
+    }
+
     func formattedHighlightCountdown() -> String {
-        let total = Int(highlightCountdown)
-        let hours = total / 3600
-        let minutes = (total % 3600) / 60
-        let timeString: String
-        if hours > 0 {
-            timeString = "\(hours)h \(minutes)m"
-        } else {
-            timeString = "\(minutes)m"
-        }
-        return isInActivePrayerWindow ? "\(timeString) left" : "in \(timeString)"
+        Self.formatHighlightCountdown(highlightCountdown, isActive: isInActivePrayerWindow)
     }
 }

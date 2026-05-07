@@ -1,8 +1,8 @@
-import EventKit
+@preconcurrency import EventKit
 import Observation
 import AppKit
 
-@Observable
+@MainActor @Observable
 final class CalendarService {
     private(set) var events: [EKEvent] = []
     private(set) var calendars: [EKCalendar] = []
@@ -41,19 +41,15 @@ final class CalendarService {
     }
 
     func requestAccess() {
-        if #available(macOS 14.0, *) {
-            store.requestFullAccessToEvents { [weak self] granted, _ in
-                DispatchQueue.main.async {
-                    self?.authorizationStatus = EKEventStore.authorizationStatus(for: .event)
-                    if granted { self?.refresh() }
-                }
-            }
-        } else {
-            store.requestAccess(to: .event) { [weak self] granted, _ in
-                DispatchQueue.main.async {
-                    self?.authorizationStatus = EKEventStore.authorizationStatus(for: .event)
-                    if granted { self?.refresh() }
-                }
+        Task {
+            if #available(macOS 14.0, *) {
+                let granted = (try? await store.requestFullAccessToEvents()) ?? false
+                self.authorizationStatus = EKEventStore.authorizationStatus(for: .event)
+                if granted { self.refresh() }
+            } else {
+                let granted = (try? await store.requestAccess(to: .event)) ?? false
+                self.authorizationStatus = EKEventStore.authorizationStatus(for: .event)
+                if granted { self.refresh() }
             }
         }
     }
@@ -120,7 +116,9 @@ final class CalendarService {
             object: store,
             queue: .main
         ) { [weak self] _ in
-            self?.refresh()
+            Task { @MainActor in
+                self?.refresh()
+            }
         }
     }
 }

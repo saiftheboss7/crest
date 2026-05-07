@@ -1,8 +1,8 @@
 import Foundation
-import UserNotifications
+@preconcurrency import UserNotifications
 import Observation
 
-@Observable
+@MainActor @Observable
 final class PrayerNotificationService {
     private let prayerTimeService: PrayerTimeService
     private var refreshTimer: Timer?
@@ -17,16 +17,13 @@ final class PrayerNotificationService {
         startDailyRefresh()
     }
 
-    deinit {
-        refreshTimer?.invalidate()
-    }
-
     func requestAuthorization() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, _ in
-            DispatchQueue.main.async {
-                self?.isAuthorized = granted
-                if granted { self?.scheduleAll() }
-            }
+        Task {
+            do {
+                let granted = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
+                self.isAuthorized = granted
+                if granted { self.scheduleAll() }
+            } catch {}
         }
     }
 
@@ -85,19 +82,20 @@ final class PrayerNotificationService {
     // MARK: - Private
 
     private func checkAuthorization() {
-        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
-            DispatchQueue.main.async {
-                self?.isAuthorized = settings.authorizationStatus == .authorized
-            }
+        Task {
+            let settings = await UNUserNotificationCenter.current().notificationSettings()
+            self.isAuthorized = settings.authorizationStatus == .authorized
         }
     }
 
     private func startDailyRefresh() {
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            guard let self else { return }
-            let today = Calendar.current.component(.day, from: Date())
-            if today != self.lastScheduledDay {
-                self.scheduleAll()
+            Task { @MainActor in
+                guard let self else { return }
+                let today = Calendar.current.component(.day, from: Date())
+                if today != self.lastScheduledDay {
+                    self.scheduleAll()
+                }
             }
         }
         RunLoop.main.add(refreshTimer!, forMode: .common)

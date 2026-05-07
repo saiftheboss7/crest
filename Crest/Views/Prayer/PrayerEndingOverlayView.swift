@@ -173,9 +173,11 @@ struct PrayerEndingOverlayView: View {
     }
 
     private func startCountdown() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            let remaining = Int(max(0, prayerEndTime.timeIntervalSince(Date())))
-            remainingSeconds = remaining
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [prayerEndTime] _ in
+            Task { @MainActor in
+                let remaining = Int(max(0, prayerEndTime.timeIntervalSince(Date())))
+                remainingSeconds = remaining
+            }
         }
         RunLoop.main.add(timer!, forMode: .common)
     }
