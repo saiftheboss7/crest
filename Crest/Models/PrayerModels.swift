@@ -47,6 +47,17 @@ enum Prayer: String, CaseIterable, Identifiable {
         }
     }
 
+    var emoji: String {
+        switch self {
+        case .fajr: return "☾"
+        case .sunrise: return "🌅"
+        case .dhuhr: return "☀️"
+        case .asr: return "🌤️"
+        case .maghrib: return "🌅"
+        case .isha: return "🌙"
+        }
+    }
+
     var themeColor: Color {
         switch self {
         case .fajr: return Color(red: 0.2, green: 0.3, blue: 0.6)

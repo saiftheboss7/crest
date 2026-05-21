@@ -60,6 +60,7 @@ struct GeneralSettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
         .onAppear {
             launchAtLogin = SMAppService.mainApp.status == .enabled
         }

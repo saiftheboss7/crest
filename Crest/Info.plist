@@ -26,6 +26,8 @@
 	<string>Crest needs access to your calendars to show upcoming events and meeting links.</string>
 	<key>NSLocationUsageDescription</key>
 	<string>Crest needs your location to calculate accurate prayer times.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Crest needs your location to calculate accurate prayer times.</string>
 	<key>SUFeedURL</key>
 	<string>https://itsrafsanjani.github.io/crest/appcast.xml</string>
 	<key>SUPublicEDKey</key>

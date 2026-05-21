@@ -45,6 +45,7 @@ targets:
         NSCalendarsFullAccessUsageDescription: "Crest needs access to your calendars to show upcoming events and meeting links."
         NSCalendarsUsageDescription: "Crest needs access to your calendars to show upcoming events and meeting links."
         NSLocationUsageDescription: "Crest needs your location to calculate accurate prayer times."
+        NSLocationWhenInUseUsageDescription: "Crest needs your location to calculate accurate prayer times."
     entitlements:
       path: Crest/Crest.entitlements
     settings:

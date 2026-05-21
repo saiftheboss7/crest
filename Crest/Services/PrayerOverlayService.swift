@@ -11,11 +11,6 @@ final class PrayerOverlayService {
     private(set) var overlayWindow: PrayerOverlayWindow?
     private(set) var activePrayer: Prayer?
 
-    var isOverlaySoundEnabled: Bool {
-        UserDefaults.standard.object(forKey: AppSettingsKey.prayerOverlaySoundEnabled) as? Bool
-            ?? AppSettingsDefault.prayerOverlaySoundEnabled
-    }
-
     private let warningMinutes: TimeInterval = 15
     private let wakeGraceMinutes: TimeInterval = 15
 
@@ -137,10 +132,15 @@ final class PrayerOverlayService {
         guard prayerTimeService.isEnabled else { return }
         guard !dismissedPrayers.contains(prayer.rawValue) else { return }
 
-        let respectDND = UserDefaults.standard.object(forKey: AppSettingsKey.overlayRespectDND) as? Bool
-            ?? AppSettingsDefault.overlayRespectDND
-        if respectDND {
-            // Skip if DND/Focus is active — NSDoNotDisturbEnabled is the legacy key
+        let defaults = UserDefaults.standard
+        let pKey = prayer.rawValue
+
+        let dnds = (defaults.dictionary(forKey: AppSettingsKey.prayerOverrideDND) as? [String: Bool])
+            ?? AppSettingsDefault.defaultPrayerOverrideDND
+        let overrideDND = dnds[pKey] ?? true
+
+        if !overrideDND {
+            // Respect DND/Focus is active — skip if DND active
             if let dndEnabled = UserDefaults(suiteName: "com.apple.notificationcenterui")?.bool(forKey: "doNotDisturb"),
                dndEnabled {
                 return
@@ -154,10 +154,8 @@ final class PrayerOverlayService {
     private func showOverlayWindow(prayer: Prayer, prayerTime: Date) {
         dismissOverlayWindowOnly()
 
-        if isOverlaySoundEnabled {
-            Task { @MainActor in
-                AlertSoundService.shared.playPrayerOverlayAlert()
-            }
+        Task { @MainActor in
+            AlertSoundService.shared.playPrayerOverlayAlert(for: prayer)
         }
 
         activePrayer = prayer

@@ -42,7 +42,7 @@ final class CrestLaunchUITests: XCTestCase {
 
         app.typeKey(",", modifierFlags: .command)
 
-        let settingsWindow = app.windows.firstMatch
+        let settingsWindow = app.windows.matching(NSPredicate(format: "title CONTAINS[c] 'Settings' OR title CONTAINS[c] 'Preferences'")).firstMatch
         let appeared = settingsWindow.waitForExistence(timeout: 5)
 
         try XCTSkipUnless(

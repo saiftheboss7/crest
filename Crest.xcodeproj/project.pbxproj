@@ -23,6 +23,7 @@
 		41624402DF685081DAFF6A66 /* MeetingAlertService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2D0488F0F3E10CA123B72AD /* MeetingAlertService.swift */; };
 		416E3285FC9BF11C9DA4F8C8 /* DayCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = F85AF892423B5F0A06ECDA2D /* DayCell.swift */; };
 		41C66B993D13DC19D37CA8EF /* EventDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE1863D44BECEA391A42D0EA /* EventDetailView.swift */; };
+		4657050272EED57971AFFEB9 /* MeshWallpaperView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E34A4523D4F09B043E177A9C /* MeshWallpaperView.swift */; };
 		56F19155EA3D5EBB32ECB6CA /* DateFormatOptionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D73987BD40CE8532BA017FC9 /* DateFormatOptionTests.swift */; };
 		5A103BF866F4D16163DA6FAB /* PlaceholderSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 884C423EC995F82110D67A96 /* PlaceholderSettingsView.swift */; };
 		5D1D12D1BD2CCE8533736801 /* SleepWakeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4598905CB0F114A151B4204A /* SleepWakeService.swift */; };
@@ -34,6 +35,7 @@
 		743B66FDBB7043CC63882DDE /* PopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60DEFEFB94D81CDE3C8DD22E /* PopoverView.swift */; };
 		7D38FA4B37BB6F01BBA41A64 /* CalendarSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F54E2C0031F04188666E4DB /* CalendarSettingsView.swift */; };
 		808B5128859E6D10C58C2467 /* TestingSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D133BA25A72F587B21EA9510 /* TestingSettingsView.swift */; };
+		85A1F3EEA51B781012F00574 /* PrayerSettingsSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4613E2D20D35EAF3B09287EC /* PrayerSettingsSheetView.swift */; };
 		87E60D10A6C54363ED125B03 /* GlobalShortcutService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC2C5017FDAEF79D98C236B7 /* GlobalShortcutService.swift */; };
 		94B25719D881F4E0E14D1680 /* PrayerOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 613F5A49922619D411B4AE58 /* PrayerOverlayView.swift */; };
 		97A44D3DAD81E591EF667A7B /* AppSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E09E37DC892544D9EAE6B99 /* AppSettingsTests.swift */; };
@@ -51,6 +53,8 @@
 		BBA48852B091A055DD90F4A7 /* MeetingAlertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 748AFFD1063DC138815E1EFA /* MeetingAlertView.swift */; };
 		BCA5640411FED84E4C3D89C6 /* PrayerEndingOverlayWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E84418163FAABEA8D221BD2 /* PrayerEndingOverlayWindow.swift */; };
 		BD16FD99397CB3F872EA08F5 /* MeetingLinkDetectorMoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6C7EDC7F0D7A8E371C47003 /* MeetingLinkDetectorMoreTests.swift */; };
+		C788A065A708562D113446BB /* WeekStripView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B304EB3FE27E6D53C9D0DF1 /* WeekStripView.swift */; };
+		C910C302A97251A10456B4CC /* LocationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB613C7439CEE1F9E784B085 /* LocationServiceTests.swift */; };
 		D26478021DFBA494E5278DAC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4FC25A0221AF4210A0E2B5C4 /* Assets.xcassets */; };
 		D35A36B2F17A63EAFFD4007D /* IslamicSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF3460709590753DF203528 /* IslamicSettingsView.swift */; };
 		D667D06D5C0E2710A3E1221B /* PrayerTimeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D91B0877FE5D9B2D3058D45 /* PrayerTimeService.swift */; };
@@ -58,6 +62,7 @@
 		EE7B11D486299BE5FE3255CF /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = A53132F41A9E661E04469D1E /* Sparkle */; };
 		EF11FD64D25C574A478197F7 /* MeetingAlertWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFE052078C3656EDC1C3B6F1 /* MeetingAlertWindow.swift */; };
 		EFE3F2877C849E03D9F844E8 /* MeetingLinkDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11B81E7A19A210CA634D084 /* MeetingLinkDetectorTests.swift */; };
+		F152C0703F7F0F23B1E6E151 /* CityPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6094DF373320F29BCCB87B51 /* CityPreset.swift */; };
 		F80E393AA0A9DCAD95CD4385 /* PrayerEndingOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AB47C306E0206CA13E2C315 /* PrayerEndingOverlayView.swift */; };
 /* End PBXBuildFile section */
 
@@ -90,12 +95,15 @@
 		34FF48833057677FE05C39CC /* PrayerModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerModels.swift; sourceTree = "<group>"; };
 		38E73BC5E20144CDF01B4219 /* CrestApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrestApp.swift; sourceTree = "<group>"; };
 		3AB47C306E0206CA13E2C315 /* PrayerEndingOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerEndingOverlayView.swift; sourceTree = "<group>"; };
+		3B304EB3FE27E6D53C9D0DF1 /* WeekStripView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekStripView.swift; sourceTree = "<group>"; };
 		453E1F407917460DDF3D19C7 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		4598905CB0F114A151B4204A /* SleepWakeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepWakeService.swift; sourceTree = "<group>"; };
+		4613E2D20D35EAF3B09287EC /* PrayerSettingsSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerSettingsSheetView.swift; sourceTree = "<group>"; };
 		49C5646A45BA81ECDE709EB8 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		4E84418163FAABEA8D221BD2 /* PrayerEndingOverlayWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerEndingOverlayWindow.swift; sourceTree = "<group>"; };
 		4FC25A0221AF4210A0E2B5C4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5E09E37DC892544D9EAE6B99 /* AppSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsTests.swift; sourceTree = "<group>"; };
+		6094DF373320F29BCCB87B51 /* CityPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CityPreset.swift; sourceTree = "<group>"; };
 		60DEFEFB94D81CDE3C8DD22E /* PopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverView.swift; sourceTree = "<group>"; };
 		613F5A49922619D411B4AE58 /* PrayerOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerOverlayView.swift; sourceTree = "<group>"; };
 		6FDE3FAFDD9F8548C396EA47 /* EventRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventRowView.swift; sourceTree = "<group>"; };
@@ -128,7 +136,9 @@
 		D6C7EDC7F0D7A8E371C47003 /* MeetingLinkDetectorMoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingLinkDetectorMoreTests.swift; sourceTree = "<group>"; };
 		D73987BD40CE8532BA017FC9 /* DateFormatOptionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatOptionTests.swift; sourceTree = "<group>"; };
 		DAC56184E1B2A47F02BC7779 /* DateFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatting.swift; sourceTree = "<group>"; };
+		DB613C7439CEE1F9E784B085 /* LocationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationServiceTests.swift; sourceTree = "<group>"; };
 		DC20B7E89F0D072779F0C977 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		E34A4523D4F09B043E177A9C /* MeshWallpaperView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshWallpaperView.swift; sourceTree = "<group>"; };
 		E60A28E0726F8F077868FAAD /* DateFormattingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormattingTests.swift; sourceTree = "<group>"; };
 		F030B2E2DC44A485B760B202 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		F2D0488F0F3E10CA123B72AD /* MeetingAlertService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingAlertService.swift; sourceTree = "<group>"; };
@@ -155,6 +165,7 @@
 				5E09E37DC892544D9EAE6B99 /* AppSettingsTests.swift */,
 				D73987BD40CE8532BA017FC9 /* DateFormatOptionTests.swift */,
 				E60A28E0726F8F077868FAAD /* DateFormattingTests.swift */,
+				DB613C7439CEE1F9E784B085 /* LocationServiceTests.swift */,
 				D6C7EDC7F0D7A8E371C47003 /* MeetingLinkDetectorMoreTests.swift */,
 				D11B81E7A19A210CA634D084 /* MeetingLinkDetectorTests.swift */,
 				9F1D08B38DEC6D89904D3BAC /* PrayerCountdownFormatterTests.swift */,
@@ -220,15 +231,9 @@
 			children = (
 				F85AF892423B5F0A06ECDA2D /* DayCell.swift */,
 				D3C39EA21A51B50C82590724 /* MiniCalendarView.swift */,
+				3B304EB3FE27E6D53C9D0DF1 /* WeekStripView.swift */,
 			);
 			path = Calendar;
-			sourceTree = "<group>";
-		};
-		77DC08B1F0CB1741EB9DC014 /* Setup */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Setup;
 			sourceTree = "<group>";
 		};
 		7915A41E54FD90E7E93E8846 /* Products */ = {
@@ -245,6 +250,7 @@
 			isa = PBXGroup;
 			children = (
 				F030B2E2DC44A485B760B202 /* AppSettings.swift */,
+				6094DF373320F29BCCB87B51 /* CityPreset.swift */,
 				34FF48833057677FE05C39CC /* PrayerModels.swift */,
 			);
 			path = Models;
@@ -266,7 +272,9 @@
 				9F54E2C0031F04188666E4DB /* CalendarSettingsView.swift */,
 				0C6BE9F3B3F2BD9ECED7056F /* GeneralSettingsView.swift */,
 				CDF3460709590753DF203528 /* IslamicSettingsView.swift */,
+				E34A4523D4F09B043E177A9C /* MeshWallpaperView.swift */,
 				884C423EC995F82110D67A96 /* PlaceholderSettingsView.swift */,
+				4613E2D20D35EAF3B09287EC /* PrayerSettingsSheetView.swift */,
 				DC20B7E89F0D072779F0C977 /* SettingsView.swift */,
 				D133BA25A72F587B21EA9510 /* TestingSettingsView.swift */,
 			);
@@ -291,7 +299,6 @@
 				3F842D942C4AFFF417D1CBE8 /* MenuBar */,
 				CC24DC66F673770FE67B85A5 /* Prayer */,
 				85D7822241355A5C5589B2FA /* Settings */,
-				77DC08B1F0CB1741EB9DC014 /* Setup */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -471,6 +478,7 @@
 				97A44D3DAD81E591EF667A7B /* AppSettingsTests.swift in Sources */,
 				56F19155EA3D5EBB32ECB6CA /* DateFormatOptionTests.swift in Sources */,
 				2B8D22428FF87006716DD89A /* DateFormattingTests.swift in Sources */,
+				C910C302A97251A10456B4CC /* LocationServiceTests.swift in Sources */,
 				BD16FD99397CB3F872EA08F5 /* MeetingLinkDetectorMoreTests.swift in Sources */,
 				EFE3F2877C849E03D9F844E8 /* MeetingLinkDetectorTests.swift in Sources */,
 				2BCE350FF7273C5445A77928 /* PrayerCountdownFormatterTests.swift in Sources */,
@@ -488,6 +496,7 @@
 				A9E06EBD9F5B58975BD44D0E /* AppSettings.swift in Sources */,
 				BAE76692271D459894E3974D /* CalendarService.swift in Sources */,
 				7D38FA4B37BB6F01BBA41A64 /* CalendarSettingsView.swift in Sources */,
+				F152C0703F7F0F23B1E6E151 /* CityPreset.swift in Sources */,
 				6AE2AFCDCDEC3150EDE62016 /* ClockService.swift in Sources */,
 				641CB2B8A8A6B2DCAF79CE3E /* CrestApp.swift in Sources */,
 				13CC27987046A433C5B44EB6 /* DateFormatting.swift in Sources */,
@@ -505,6 +514,7 @@
 				EF11FD64D25C574A478197F7 /* MeetingAlertWindow.swift in Sources */,
 				BACA6E41617EB4D9EE677451 /* MeetingLinkDetector.swift in Sources */,
 				3F93DA114A5454F544E1C3A7 /* MenuBarLabel.swift in Sources */,
+				4657050272EED57971AFFEB9 /* MeshWallpaperView.swift in Sources */,
 				B4A7A196F8A22013B6BA4D2C /* MiniCalendarView.swift in Sources */,
 				5A103BF866F4D16163DA6FAB /* PlaceholderSettingsView.swift in Sources */,
 				743B66FDBB7043CC63882DDE /* PopoverView.swift in Sources */,
@@ -517,12 +527,14 @@
 				273A281FE4F528B0040055BB /* PrayerOverlayService.swift in Sources */,
 				94B25719D881F4E0E14D1680 /* PrayerOverlayView.swift in Sources */,
 				2B5C8500295F79349BB0969D /* PrayerOverlayWindow.swift in Sources */,
+				85A1F3EEA51B781012F00574 /* PrayerSettingsSheetView.swift in Sources */,
 				D667D06D5C0E2710A3E1221B /* PrayerTimeService.swift in Sources */,
 				7304066B00F7974744FEDDDE /* PrayerTimesView.swift in Sources */,
 				08841F6F0D7C1CB58800F7AF /* SettingsView.swift in Sources */,
 				5D1D12D1BD2CCE8533736801 /* SleepWakeService.swift in Sources */,
 				808B5128859E6D10C58C2467 /* TestingSettingsView.swift in Sources */,
 				E544B37692C36B8FEFFBB74A /* Theme.swift in Sources */,
+				C788A065A708562D113446BB /* WeekStripView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

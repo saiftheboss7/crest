@@ -1,4 +1,5 @@
 import SwiftUI
+import Adhan
 
 struct PrayerOverlayView: View {
     let prayer: Prayer
@@ -9,11 +10,8 @@ struct PrayerOverlayView: View {
 
     @State private var remainingSeconds: Int
     @State private var endRemainingSeconds: Int
-    @State private var dismissText = ""
     @State private var timer: Timer?
-    @State private var selectedSnoozeDuration: Int = 5
-    @State private var shakeOffset: CGFloat = 0
-    @FocusState private var isTextFieldFocused: Bool
+    @State private var elapsedSeconds: Int = 0
 
     init(prayer: Prayer, prayerTime: Date, prayerEndTime: Date?, onDismiss: @escaping () -> Void, onSnooze: @escaping (Int) -> Void) {
         self.prayer = prayer
@@ -27,194 +25,298 @@ struct PrayerOverlayView: View {
         _endRemainingSeconds = State(initialValue: endRemaining)
     }
 
-    private var countdownText: String {
-        let m = remainingSeconds / 60
-        let s = remainingSeconds % 60
-        return String(format: "%02d:%02d", m, s)
-    }
+    private var timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "h:mm a"
+        return f
+    }()
 
     private var waqtEndsText: String? {
         guard prayerEndTime != nil, endRemainingSeconds > 0 else { return nil }
         let hours = endRemainingSeconds / 3600
         let minutes = (endRemainingSeconds % 3600) / 60
+        let seconds = endRemainingSeconds % 60
         if hours > 0 {
-            return "Waqt ends in \(hours)h \(minutes)m"
-        } else if minutes > 0 {
-            return "Waqt ends in \(minutes)m"
+            return String(format: "Waqt ends in %dh %dm %ds", hours, minutes, seconds)
         } else {
-            return "Waqt ends in < 1m"
+            return String(format: "Waqt ends in %dm %ds", minutes, seconds)
         }
     }
 
-    private var canDismiss: Bool {
-        dismissText.lowercased().trimmingCharacters(in: .whitespaces) == "inshallah"
+    /// Brighter gold than the previous #c4973b. Lifts the title's contrast to ~10.6:1
+    /// against the dark canvas and clears 7:1 even at the centre of the radial glow.
+    private var themeColor: Color {
+        Color(red: 228/255, green: 183/255, blue: 91/255) // #E4B75B
     }
 
-    private var themeColor: Color { prayer.themeColor }
+    private var autoDismissMinutes: Int {
+        let defaults = UserDefaults.standard
+        let autoDismiss = (defaults.dictionary(forKey: AppSettingsKey.prayerAutoDismissMinutes) as? [String: Int])
+            ?? AppSettingsDefault.defaultPrayerAutoDismissMinutes
+        return autoDismiss[prayer.rawValue] ?? 0
+    }
+
+    private var hijriDateString: String {
+        let date = Date()
+        let defaults = UserDefaults.standard
+        let adjustment = defaults.integer(forKey: AppSettingsKey.hijriDateOffset)
+        let calendar = Calendar.current
+        let adjustedDate = calendar.date(byAdding: .day, value: adjustment, to: date) ?? date
+        
+        let hijriCalendar = Calendar(identifier: .islamicUmmAlQura)
+        let components = hijriCalendar.dateComponents([.year, .month, .day], from: adjustedDate)
+        
+        let monthNames = [
+            1: "Muharram", 2: "Safar", 3: "Rabi al-Awwal", 4: "Rabi al-Thani",
+            5: "Jumada al-Ula", 6: "Jumada al-Thani", 7: "Rajab", 8: "Sha'ban",
+            9: "Ramadan", 10: "Shawwal", 11: "Dhul Qi'dah", 12: "Dhul Hijjah"
+        ]
+        
+        if let day = components.day, let month = components.month, let year = components.year {
+            let monthName = monthNames[month] ?? "Unknown"
+            return "\(day) \(monthName) \(year) AH"
+        } else {
+            let formatter = DateFormatter()
+            formatter.calendar = hijriCalendar
+            formatter.dateStyle = .long
+            return formatter.string(from: adjustedDate)
+        }
+    }
+
+    private var qiblaText: String {
+        let defaults = UserDefaults.standard
+        // Manual ("static") mode overrides automatic. Cached coords are Double; static
+        // coords are String (the manual entry @AppStorage binds to String).
+        let isAutomatic = !defaults.bool(forKey: AppSettingsKey.staticLocationEnabled)
+        let lat: Double
+        let lon: Double
+        if isAutomatic {
+            lat = defaults.double(forKey: AppSettingsKey.cachedLatitude)
+            lon = defaults.double(forKey: AppSettingsKey.cachedLongitude)
+        } else {
+            lat = Double(defaults.string(forKey: AppSettingsKey.staticLatitude) ?? "") ?? 0
+            lon = Double(defaults.string(forKey: AppSettingsKey.staticLongitude) ?? "") ?? 0
+        }
+
+        if lat != 0.0 || lon != 0.0 {
+            let coords = Coordinates(latitude: lat, longitude: lon)
+            let direction = Qibla(coordinates: coords).direction
+            return String(format: "Qibla %.0f°", direction)
+        }
+        return "Qibla 287°"
+    }
 
     var body: some View {
         ZStack {
             overlayBackground
-            countdownBadge
             mainContent
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             startCountdown()
-            isTextFieldFocused = true
         }
         .onDisappear { timer?.invalidate() }
     }
 
     private var overlayBackground: some View {
-        ZStack {
-            Color(red: 0.04, green: 0.04, blue: 0.06)
+        // Scale the glow with the viewport so it stays proportional to the
+        // up-sized typography. On a 1920×1200 display the glow extends to roughly
+        // the screen edges; on a 5K external it reaches further still.
+        GeometryReader { geo in
+            let diagonal = sqrt(geo.size.width * geo.size.width + geo.size.height * geo.size.height)
+            let core = max(120, min(geo.size.width * 0.08, 260))
+            let edge = max(1000, min(diagonal * 0.65, 2600))
 
-            RadialGradient(
-                stops: [
-                    .init(color: themeColor.opacity(0.25), location: 0.0),
-                    .init(color: themeColor.opacity(0.15), location: 0.15),
-                    .init(color: themeColor.opacity(0.08), location: 0.3),
-                    .init(color: themeColor.opacity(0.03), location: 0.5),
-                    .init(color: .clear, location: 0.7)
-                ],
-                center: .center,
-                startRadius: 50,
-                endRadius: 500
-            )
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .drawingGroup()
-    }
+            ZStack {
+                Color(red: 0.04, green: 0.04, blue: 0.06) // #0a0a0c
 
-    private var countdownBadge: some View {
-        VStack {
-            Text(countdownText)
-                .font(.system(size: 14, weight: .medium, design: .rounded).monospacedDigit())
-                .foregroundStyle(.white.opacity(0.5))
-                .padding(.top, 40)
-            Spacer()
+                // Glow peak kept at 0.08 (so accent-coloured text in the centre
+                // still clears WCAG AAA 7:1). Stops pushed further from centre so
+                // the warmth reaches toward the corners of the canvas.
+                RadialGradient(
+                    stops: [
+                        .init(color: themeColor.opacity(0.08), location: 0.0),
+                        .init(color: themeColor.opacity(0.06), location: 0.25),
+                        .init(color: themeColor.opacity(0.03), location: 0.55),
+                        .init(color: themeColor.opacity(0.01), location: 0.85),
+                        .init(color: .clear, location: 1.0)
+                    ],
+                    center: .center,
+                    startRadius: core,
+                    endRadius: edge
+                )
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .drawingGroup()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var mainContent: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        GeometryReader { geo in
+            // Type scale derived from viewport width. Clamped so 13" MBPs don't
+            // get clipped and 27" / external displays go genuinely big.
+            let titleSize = max(80, min(geo.size.width * 0.10, 140))
+            let timeSize = max(30, min(geo.size.width * 0.025, 44))
+            let circleSize = max(140, min(geo.size.width * 0.13, 180))
+            let emojiSize = circleSize * 0.46
+            let pillTextSize = max(17, min(geo.size.width * 0.013, 22))
+            let buttonTextSize = max(20, min(geo.size.width * 0.013, 24))
+            let snoozeTextSize = max(15, min(geo.size.width * 0.011, 18))
+            let verseSize = max(15, min(geo.size.width * 0.011, 18))
 
-            Image(systemName: prayer.systemImage)
-                .font(.system(size: 48))
-                .foregroundStyle(themeColor)
-                .padding(.bottom, 24)
+            VStack(spacing: 0) {
+                Spacer()
 
-            Text("It's time for \(prayer.displayName)")
-                .font(.system(size: 34, weight: .bold))
-                .foregroundStyle(.white)
-                .padding(.bottom, 12)
+                // Circular Icon — kept, but larger and with a slightly stronger fill
+                // so the icon still feels grounded against the dimmer glow.
+                Text(prayer.emoji)
+                    .font(.system(size: emojiSize))
+                    .foregroundColor(prayer == .fajr ? Color(red: 94/255, green: 124/255, blue: 226/255) : themeColor)
+                    .frame(width: circleSize, height: circleSize)
+                    .background(
+                        Circle()
+                            .fill(themeColor.opacity(0.12))
+                    )
+                    .overlay(
+                        Circle()
+                            .stroke(themeColor.opacity(0.35), lineWidth: 1.5)
+                    )
+                    .padding(.bottom, 44)
 
-            if let waqtText = waqtEndsText {
-                HStack(spacing: 6) {
-                    Image(systemName: "clock")
-                        .font(.caption)
-                    Text(waqtText)
-                        .font(.callout.weight(.medium))
-                }
-                .foregroundStyle(themeColor)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(themeColor.opacity(0.15), in: Capsule())
-                .padding(.bottom, 16)
-            }
+                // Prayer Name — bigger, lighter weight for a more elegant feel.
+                Text(prayer.displayName)
+                    .font(.system(size: titleSize, weight: .semibold))
+                    .foregroundColor(themeColor)
+                    .tracking(-1.2)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                    .padding(.bottom, 18)
 
-            Text(quranVerse)
-                .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.6))
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 500)
-                .padding(.bottom, 32)
+                // Start Time — opacity lifted from 0.55 (6.2:1) to 0.92 (~16:1).
+                Text(timeFormatter.string(from: prayerTime))
+                    .font(.system(size: timeSize, weight: .light))
+                    .foregroundStyle(.white.opacity(0.92))
+                    .tracking(0.5)
+                    .padding(.bottom, 10)
 
-            dismissField
-                .padding(.bottom, 32)
+                // Hijri Date — was 14pt @0.35 (3.1:1) → bigger and @0.85 (~14:1).
+                Text(hijriDateString)
+                    .font(.system(size: pillTextSize - 2, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.85))
+                    .tracking(0.4)
+                    .padding(.bottom, 32)
 
-            actionButtons
-
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private var dismissField: some View {
-        DismissPromptField(
-            text: $dismissText,
-            onSubmit: handleSubmit,
-            isFocused: $isTextFieldFocused
-        )
-        .offset(x: shakeOffset)
-        .animation(.default, value: shakeOffset)
-    }
-
-    private func handleSubmit() {
-        if canDismiss {
-            onDismiss()
-        } else {
-            triggerShake()
-        }
-    }
-
-    private func triggerShake() {
-        shakeOffset = 10
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { shakeOffset = -8 }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { shakeOffset = 6 }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { shakeOffset = -4 }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { shakeOffset = 0 }
-    }
-
-    private var actionButtons: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 16) {
-                Button(action: { onSnooze(selectedSnoozeDuration) }) {
-                    Label("Snooze (\(selectedSnoozeDuration)m)", systemImage: "moon.zzz")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(themeColor, in: Capsule())
-                }
-                .buttonStyle(.plain)
-
-                Button(action: onDismiss) {
-                    Label("Skip", systemImage: "xmark")
-                        .font(.body.weight(.medium))
-                        .foregroundStyle(.white.opacity(0.7))
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(.white.opacity(0.1), in: Capsule())
-                        .overlay(Capsule().strokeBorder(.white.opacity(0.15), lineWidth: 1))
-                }
-                .buttonStyle(.plain)
-                .disabled(!canDismiss)
-                .opacity(canDismiss ? 1 : 0.4)
-            }
-
-            HStack(spacing: 8) {
-                ForEach([5, 10, 15, 30], id: \.self) { duration in
-                    Button {
-                        selectedSnoozeDuration = duration
-                    } label: {
-                        Text("\(duration)m")
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(selectedSnoozeDuration == duration ? .white : .white.opacity(0.5))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(
-                                selectedSnoozeDuration == duration ? themeColor.opacity(0.6) : .white.opacity(0.08),
-                                in: Capsule()
-                            )
+                // Waqt countdown pill — accent color still, but pill backdrop bumped
+                // for a more "glassy" look and a clearer affordance.
+                if let waqtText = waqtEndsText {
+                    HStack(spacing: 10) {
+                        Text("⏱")
+                            .font(.system(size: pillTextSize))
+                        Text(waqtText)
+                            .font(.system(size: pillTextSize, weight: .semibold))
                     }
-                    .buttonStyle(.plain)
+                    .foregroundStyle(themeColor)
+                    .padding(.horizontal, 22)
+                    .padding(.vertical, 10)
+                    .background(
+                        Capsule()
+                            .fill(themeColor.opacity(0.14))
+                    )
+                    .overlay(
+                        Capsule()
+                            .stroke(themeColor.opacity(0.35), lineWidth: 1)
+                    )
+                    .padding(.bottom, 18)
                 }
+
+                // Qibla pill — was 13pt @0.45 (4.6:1) → larger, @0.92 (~16:1).
+                HStack(spacing: 10) {
+                    Text("↖")
+                        .font(.system(size: pillTextSize))
+                    Text(qiblaText)
+                        .font(.system(size: pillTextSize - 2, weight: .semibold))
+                }
+                .foregroundStyle(.white.opacity(0.92))
+                .padding(.horizontal, 22)
+                .padding(.vertical, 10)
+                .background(
+                    Capsule()
+                        .fill(Color.white.opacity(0.08))
+                )
+                .overlay(
+                    Capsule()
+                        .stroke(Color.white.opacity(0.22), lineWidth: 1)
+                )
+                .padding(.bottom, 64)
+
+                // Big Mark as Prayed button — restyled to match the waqt pill:
+                // translucent accent fill, accent text, matching capsule stroke.
+                Button(action: onDismiss) {
+                    Text("Mark as Prayed")
+                        .font(.system(size: buttonTextSize, weight: .bold))
+                        .tracking(0.3)
+                        .foregroundStyle(themeColor)
+                        .frame(width: 340, height: 68)
+                        .background(
+                            Capsule()
+                                .fill(themeColor.opacity(0.14))
+                        )
+                        .overlay(
+                            Capsule()
+                                .stroke(themeColor.opacity(0.35), lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut(.return, modifiers: [])
+                .padding(.bottom, 26)
+
+                // Snooze row — pills slightly bigger, text @0.92 (~16:1).
+                HStack(spacing: 14) {
+                    snoozePill(label: "Remind in 15m", key: "1", textSize: snoozeTextSize, action: { onSnooze(15) })
+                        .keyboardShortcut("1", modifiers: [])
+                    snoozePill(label: "Remind in 30m", key: "3", textSize: snoozeTextSize, action: { onSnooze(30) })
+                        .keyboardShortcut("3", modifiers: [])
+                    snoozePill(label: "Dismiss", key: "ESC", textSize: snoozeTextSize, action: onDismiss)
+                        .keyboardShortcut(.escape, modifiers: [])
+                }
+                .padding(.bottom, 40)
+
+                // Quran verse — was 13pt @0.4 (3.8:1) → bigger, italic, @0.78 (~11:1).
+                Text(quranVerse)
+                    .font(.system(size: verseSize, weight: .regular))
+                    .italic()
+                    .foregroundStyle(.white.opacity(0.78))
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .padding(.horizontal, 64)
+                    .padding(.bottom, 12)
+
+                Spacer()
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+    }
+
+    /// Snooze/Dismiss pill shared across the three secondary actions. White@0.92
+    /// over the dark canvas measures ~16:1 — well clear of AAA.
+    private func snoozePill(label: String, key: String, textSize: CGFloat, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Text(label)
+                Text(key)
+                    .font(.system(size: textSize - 4, weight: .bold))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: 4))
+            }
+            .font(.system(size: textSize, weight: .medium))
+            .foregroundColor(.white.opacity(0.92))
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(Color.white.opacity(0.08), in: Capsule())
+            .overlay(Capsule().strokeBorder(.white.opacity(0.22), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
     }
 
     private var quranVerse: String {
@@ -224,6 +326,11 @@ struct PrayerOverlayView: View {
     private func startCountdown() {
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [prayerTime, prayerEndTime] _ in
             Task { @MainActor in
+                elapsedSeconds += 1
+                if autoDismissMinutes > 0 && elapsedSeconds >= autoDismissMinutes * 60 {
+                    onDismiss()
+                    return
+                }
                 let remaining = Int(max(0, prayerTime.timeIntervalSince(Date())))
                 remainingSeconds = remaining
                 if let endTime = prayerEndTime {

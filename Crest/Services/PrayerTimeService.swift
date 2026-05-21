@@ -29,10 +29,29 @@ final class PrayerTimeService {
         self.locationService = locationService
         recompute()
         startTimer()
+        
+        let defaults = UserDefaults.standard
+        let islamicEnabled = defaults.object(forKey: AppSettingsKey.islamicModeEnabled) as? Bool
+            ?? AppSettingsDefault.islamicModeEnabled
+        let staticEnabled = defaults.object(forKey: AppSettingsKey.staticLocationEnabled) as? Bool
+            ?? AppSettingsDefault.staticLocationEnabled
+        
+        if islamicEnabled && !staticEnabled {
+            locationService.requestLocation()
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: .locationDidUpdate,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            self.recompute()
+        }
     }
 
     func recompute() {
-        guard isEnabled, let coords = resolvedCoordinates() else {
+        guard isEnabled, let prayers = prayerTimes(for: Date()) else {
             todayPrayers = []
             currentPrayer = nil
             nextPrayer = nil
@@ -47,14 +66,74 @@ final class PrayerTimeService {
             return
         }
 
+        rawPrayerTimes = prayers
+
+        let jamaatEnabled = UserDefaults.standard.object(forKey: AppSettingsKey.jamaatTimesEnabled) as? Bool
+            ?? AppSettingsDefault.jamaatTimesEnabled
+        let jamaatOverrides = UserDefaults.standard.dictionary(forKey: "jamaatOverridePerPrayer") as? [String: Bool] ?? [:]
+        let jamaatTimes = loadJamaatTimes()
+
+        todayPrayers = [
+            PrayerTime(prayer: .fajr, time: prayers.fajr,
+                       jamaatTime: (jamaatEnabled && jamaatOverrides[Prayer.fajr.rawValue] == true) ? jamaatTime(for: .fajr, configuredTimes: jamaatTimes) : nil),
+            PrayerTime(prayer: .sunrise, time: prayers.sunrise),
+            PrayerTime(prayer: .dhuhr, time: prayers.dhuhr,
+                       jamaatTime: (jamaatEnabled && jamaatOverrides[Prayer.dhuhr.rawValue] == true) ? jamaatTime(for: .dhuhr, configuredTimes: jamaatTimes) : nil),
+            PrayerTime(prayer: .asr, time: prayers.asr,
+                       jamaatTime: (jamaatEnabled && jamaatOverrides[Prayer.asr.rawValue] == true) ? jamaatTime(for: .asr, configuredTimes: jamaatTimes) : nil),
+            PrayerTime(prayer: .maghrib, time: prayers.maghrib,
+                       jamaatTime: (jamaatEnabled && jamaatOverrides[Prayer.maghrib.rawValue] == true) ? jamaatTime(for: .maghrib, configuredTimes: jamaatTimes) : nil),
+            PrayerTime(prayer: .isha, time: prayers.isha,
+                       jamaatTime: (jamaatEnabled && jamaatOverrides[Prayer.isha.rawValue] == true) ? jamaatTime(for: .isha, configuredTimes: jamaatTimes) : nil),
+        ]
+
+        islamicMidnight = SunnahTimes(from: prayers)?.middleOfTheNight
+
+        let cal = Calendar(identifier: .gregorian)
+        let dateComponents = cal.dateComponents([.year, .month, .day], from: Date())
+        lastComputedDay = dateComponents.day ?? -1
+        updateCurrentNext()
+        computeHijriDate()
+        NotificationCenter.default.post(name: .prayerTimesDidRecompute, object: nil)
+    }
+
+    func timeForPrayer(_ prayer: Prayer) -> Date? {
+        todayPrayers.first(where: { $0.prayer == prayer })?.time
+    }
+
+    /// Returns the end of the prayer's valid window per Islamic fiqh.
+    func prayerEndTime(_ prayer: Prayer) -> Date? {
+        switch prayer {
+        case .fajr:    return timeForPrayer(.sunrise)
+        case .sunrise: return timeForPrayer(.dhuhr)
+        case .dhuhr:   return timeForPrayer(.asr)
+        case .asr:     return timeForPrayer(.maghrib)
+        case .maghrib: return timeForPrayer(.isha)
+        case .isha:    
+            if let todayFajr = timeForPrayer(.fajr), Date() < todayFajr {
+                return todayFajr
+            }
+            return tomorrowFajrTime()
+        }
+    }
+
+    func tomorrowFajrTime() -> Date? {
+        let cal = Calendar(identifier: .gregorian)
+        guard let tomorrow = cal.date(byAdding: .day, value: 1, to: Date()) else { return nil }
+        return prayerTimes(for: tomorrow)?.fajr
+    }
+
+    // MARK: - Private
+
+    private func prayerTimes(for date: Date) -> PrayerTimes? {
+        guard let coords = resolvedCoordinates() else { return nil }
+        
         let methodRaw = UserDefaults.standard.string(forKey: AppSettingsKey.calculationMethod)
             ?? AppSettingsDefault.calculationMethod
         let madhabRaw = UserDefaults.standard.string(forKey: AppSettingsKey.madhab)
             ?? AppSettingsDefault.madhab
-
         let method = CalculationMethodOption(rawValue: methodRaw) ?? .moonsightingCommittee
         let madhab = MadhabOption(rawValue: madhabRaw) ?? .shafi
-
         let shafaqRaw = UserDefaults.standard.string(forKey: AppSettingsKey.shafaq)
             ?? AppSettingsDefault.shafaq
         let shafaq = ShafaqOption(rawValue: shafaqRaw) ?? .general
@@ -71,59 +150,9 @@ final class PrayerTimeService {
         params.adjustments.isha = adjustments["isha"] ?? 0
 
         let cal = Calendar(identifier: .gregorian)
-        let dateComponents = cal.dateComponents([.year, .month, .day], from: Date())
-
-        guard let prayers = PrayerTimes(coordinates: coords, date: dateComponents, calculationParameters: params) else {
-            todayPrayers = []
-            rawPrayerTimes = nil
-            islamicMidnight = nil
-            return
-        }
-
-        rawPrayerTimes = prayers
-
-        let jamaatEnabled = UserDefaults.standard.object(forKey: AppSettingsKey.jamaatTimesEnabled) as? Bool
-            ?? AppSettingsDefault.jamaatTimesEnabled
-        let jamaatTimes = loadJamaatTimes()
-
-        todayPrayers = [
-            PrayerTime(prayer: .fajr, time: prayers.fajr,
-                       jamaatTime: jamaatEnabled ? jamaatTime(for: .fajr, configuredTimes: jamaatTimes) : nil),
-            PrayerTime(prayer: .sunrise, time: prayers.sunrise),
-            PrayerTime(prayer: .dhuhr, time: prayers.dhuhr,
-                       jamaatTime: jamaatEnabled ? jamaatTime(for: .dhuhr, configuredTimes: jamaatTimes) : nil),
-            PrayerTime(prayer: .asr, time: prayers.asr,
-                       jamaatTime: jamaatEnabled ? jamaatTime(for: .asr, configuredTimes: jamaatTimes) : nil),
-            PrayerTime(prayer: .maghrib, time: prayers.maghrib,
-                       jamaatTime: jamaatEnabled ? jamaatTime(for: .maghrib, configuredTimes: jamaatTimes) : nil),
-            PrayerTime(prayer: .isha, time: prayers.isha,
-                       jamaatTime: jamaatEnabled ? jamaatTime(for: .isha, configuredTimes: jamaatTimes) : nil),
-        ]
-
-        islamicMidnight = SunnahTimes(from: prayers)?.middleOfTheNight
-
-        lastComputedDay = dateComponents.day ?? -1
-        updateCurrentNext()
-        computeHijriDate()
+        let dateComponents = cal.dateComponents([.year, .month, .day], from: date)
+        return PrayerTimes(coordinates: coords, date: dateComponents, calculationParameters: params)
     }
-
-    func timeForPrayer(_ prayer: Prayer) -> Date? {
-        todayPrayers.first(where: { $0.prayer == prayer })?.time
-    }
-
-    /// Returns the end of the prayer's valid window per Islamic fiqh.
-    func prayerEndTime(_ prayer: Prayer) -> Date? {
-        switch prayer {
-        case .fajr:    return timeForPrayer(.sunrise)
-        case .sunrise: return timeForPrayer(.dhuhr)
-        case .dhuhr:   return timeForPrayer(.asr)
-        case .asr:     return timeForPrayer(.maghrib)
-        case .maghrib: return timeForPrayer(.isha)
-        case .isha:    return islamicMidnight
-        }
-    }
-
-    // MARK: - Private
 
     private func updateCurrentNext() {
         let now = Date()
@@ -131,33 +160,51 @@ final class PrayerTimeService {
         var current: Prayer?
         var next: Prayer?
 
-        let ordered: [Prayer] = [.fajr, .sunrise, .dhuhr, .asr, .maghrib, .isha]
-        for (index, prayer) in ordered.enumerated() {
-            guard let time = timeForPrayer(prayer) else { continue }
-            if time <= now {
-                current = prayer
-                if index + 1 < ordered.count {
-                    next = ordered[index + 1]
+        if let todayFajr = timeForPrayer(.fajr), now < todayFajr {
+            current = .isha
+            next = .fajr
+        } else {
+            let ordered: [Prayer] = [.fajr, .sunrise, .dhuhr, .asr, .maghrib, .isha]
+            for (index, prayer) in ordered.enumerated() {
+                guard let time = timeForPrayer(prayer) else { continue }
+                if time <= now {
+                    current = prayer
+                    if index + 1 < ordered.count {
+                        next = ordered[index + 1]
+                    } else {
+                        next = .fajr
+                    }
                 }
             }
-        }
-
-        if current == nil {
-            next = .fajr
         }
 
         currentPrayer = current
         nextPrayer = next
 
-        if let next, let time = timeForPrayer(next) {
-            nextPrayerTime = time
-            countdownToNext = max(0, time.timeIntervalSince(now))
+        if let next {
+            if next == .fajr && current == .isha {
+                if let todayFajr = timeForPrayer(.fajr), now < todayFajr {
+                    nextPrayerTime = todayFajr
+                    countdownToNext = max(0, todayFajr.timeIntervalSince(now))
+                } else if let tFajr = tomorrowFajrTime() {
+                    nextPrayerTime = tFajr
+                    countdownToNext = max(0, tFajr.timeIntervalSince(now))
+                } else {
+                    nextPrayerTime = nil
+                    countdownToNext = 0
+                }
+            } else if let time = timeForPrayer(next) {
+                nextPrayerTime = time
+                countdownToNext = max(0, time.timeIntervalSince(now))
+            } else {
+                nextPrayerTime = nil
+                countdownToNext = 0
+            }
         } else {
             nextPrayerTime = nil
             countdownToNext = 0
         }
 
-        // Determine highlighted prayer: current prayer if in active window, otherwise next prayer
         if let current = current,
            current != .sunrise,
            let endTime = prayerEndTime(current),
@@ -263,20 +310,39 @@ final class PrayerTimeService {
         return locationService.coordinates
     }
 
+    /// Three-tier countdown — "1h 20m 45s" / "20m 45s" / "45s" — so the popover
+    /// can show a live tick rather than the previous coarser "1h 20m" snap.
     static func formatCountdown(_ seconds: TimeInterval) -> String {
         let total = max(0, Int(seconds))
         let hours = total / 3600
         let minutes = (total % 3600) / 60
+        let secs = total % 60
         if hours > 0 {
-            return "\(hours)h \(minutes)m"
+            return "\(hours)h \(minutes)m \(secs)s"
+        } else if minutes > 0 {
+            return "\(minutes)m \(secs)s"
         } else {
-            return "\(minutes)m"
+            return "\(secs)s"
         }
+    }
+
+    /// Fraction of the active prayer window that's still ahead — full when the
+    /// waqt just began, empty when it's about to end. Returns 0 when no prayer
+    /// is currently active.
+    var highlightProgress: Double {
+        guard isInActivePrayerWindow,
+              let prayer = highlightedPrayer,
+              let start = timeForPrayer(prayer),
+              let end = prayerEndTime(prayer)
+        else { return 0 }
+        let total = end.timeIntervalSince(start)
+        guard total > 0 else { return 0 }
+        return max(0, min(1, highlightCountdown / total))
     }
 
     static func formatHighlightCountdown(_ seconds: TimeInterval, isActive: Bool) -> String {
         let timeString = formatCountdown(seconds)
-        return isActive ? "\(timeString) left" : "in \(timeString)"
+        return isActive ? "\(timeString) left" : "Starts in \(timeString)"
     }
 
     func formattedCountdown() -> String {
