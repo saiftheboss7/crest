@@ -6,15 +6,6 @@ A native macOS menu bar app for calendar events, meetings, and schedule awarenes
 
 ## Features
 
-Keep forgetting meetings when there was a tiny notification triggered 30m before somewhere? Crest is designed to make your event alerts look good, taking the full real estate of your Retina screen with beautiful typography, accessibility friendly design. You probably won’t be able to miss them. Crest also has an optional Islamic Reminder app section to remind you about the daily prayers.
-
-<img width="660" height="1274" alt="CleanShot 2026-05-22 at 04 36 18@2x" src="https://github.com/user-attachments/assets/55d531aa-f914-4e2e-b80d-a5a851c0e9b4" />
-
-<img width="5118" height="2880" alt="CleanShot 2026-05-22 at 03 38 57@2x" src="https://github.com/user-attachments/assets/08210bb8-d6d7-4abb-9997-ab1bddb99f32" />
-<img width="5118" height="2872" alt="CleanShot 2026-05-22 at 03 39 14@2x" src="https://github.com/user-attachments/assets/84c606de-4495-4135-af20-e625ee17b996" />
-
-
-
 ### Calendar & Events
 - View upcoming events from all macOS system calendars (including synced Google Calendar)
 - Interactive mini calendar in the popover
@@ -99,7 +90,7 @@ Restart the app after granting permission.
 
 Islamic Mode uses your location to calculate accurate prayer times. When you enable Islamic Mode:
 
-1. Crest will prompt for location access — click **Allow**, or
+1. Crest will prompt for location access, click **Allow**, or
 2. Go to **System Settings > Privacy & Security > Location Services** and enable Crest
 
 Location is used only for prayer time calculation and is never sent off-device.
@@ -129,8 +120,8 @@ Crest is licensed under the **GNU Affero General Public License v3.0** (AGPL-3.0
 
 In plain English:
 
-- ✅ Anyone is free to use, study, modify, and redistribute Crest — for any purpose, including commercial use
-- ✅ You may run a modified copy for your team, your masjid, your community — no permission needed
+- ✅ Anyone is free to use, study, modify, and redistribute Crest, for any purpose, including commercial use
+- ✅ You may run a modified copy for your team, your masjid, your community, no permission needed
 - ⚠️ If you distribute or run a modified version (including as a hosted service), you **must** publish the modified source code under the same AGPL-3.0 licence
 - ⚠️ You cannot fork Crest, add proprietary closed-source features, and sell the result as a closed product
 
@@ -138,22 +129,22 @@ This is deliberate. The intent is that improvements made by anyone flow back to 
 
 ## Credits
 
-Crest was created and is primarily authored by **[Rafsan Jani (@itsrafsanjani)](https://github.com/itsrafsanjani)** — every meaningful subsystem in the codebase, from the menu-bar architecture to the EventKit integration to the prayer-time engine, is his work. Thank you, Rafsan, for the foundation that made everything since possible.
+Crest was created and is primarily authored by **[Rafsan Jani (@itsrafsanjani)](https://github.com/itsrafsanjani)**. Every meaningful subsystem in the codebase, from the menu-bar architecture to the EventKit integration to the prayer-time engine, is his work. Thank you, Rafsan, for the foundation that made everything since possible.
 
 ### Contributors
 
-- [@itsrafsanjani](https://github.com/itsrafsanjani) — original author and maintainer
-- [@saiftheboss7](https://github.com/saiftheboss7) — UX improvements (Liquid Glass popover, overlay redesign, location-service hardening, late-reminder migration, hover affordances)
+- [@itsrafsanjani](https://github.com/itsrafsanjani), original author and maintainer
+- [@saiftheboss7](https://github.com/saiftheboss7), UX improvements (Liquid Glass popover, overlay redesign, location-service hardening, late-reminder migration, hover affordances)
 
 Want to be listed here? See the next section.
 
-## Sadaqah Jariyah (صدقة جارية) — an open invitation
+## Continuous good, an open invitation
 
-Crest is offered as a form of **Sadaqah Jariyah** — in Islam, an act of charity whose benefit continues to flow long after the original act. The classical example is digging a well that quenches thirst for generations; the modern equivalent is writing software that helps someone perform their prayer on time, every day, for years.
+Crest is built as an act of continuous good: work whose impact compounds because it keeps helping people without further effort from the original giver. The same idea exists in many traditions under different names. The Jewish call it *tikkun olam* (repairing the world). Buddhists speak of earning *merit* through generosity. Secular thinkers call it "pay it forward".
 
-> *For readers from other traditions:* think of it as **perpetual charity** or **enduring good** — work whose impact compounds indefinitely because it keeps helping people without further effort from the original giver. The same idea exists in many faiths and philosophies under different names (the Jewish concept of *tikkun olam*, the Buddhist notion of *merit*, the secular "pay it forward").
+In Islam, the concept is called **Sadaqah Jariyah** (صدقة جارية), meaning continuous charity. The classical example is digging a well that quenches thirst for generations. The modern equivalent is writing software that helps someone arrive on time for their prayer, every day, for years.
 
-The reason Crest is open source under AGPL — and the reason the licence is structured to prevent anyone from privatising the work — is so that the benefit *stays* in circulation, free for the next person to use, modify, share, and improve. Every line of code anyone contributes to Crest helps a fellow human stay on time with what matters to them.
+The reason Crest is open source under AGPL, and the reason the licence is structured to prevent anyone from privatising the work, is so the benefit *stays* in circulation: free for the next person to use, modify, share, and improve. Every line of code anyone contributes to Crest helps a fellow human stay on time with what matters to them.
 
 **You're warmly invited to contribute.** Whether you're:
 
@@ -161,7 +152,7 @@ The reason Crest is open source under AGPL — and the reason the licence is str
 - a designer improving accessibility, typography, or the visual language,
 - a Muslim noticing a fiqh detail that's off (calculation method defaults, jamaat handling, edge cases around prayer timings),
 - a translator bringing Crest into more languages,
-- or just someone reporting an issue you ran into —
+- or just someone reporting an issue you ran into,
 
 …your contribution is welcome, and your name lands in the contributor list above. Issues and PRs at https://github.com/saiftheboss7/crest.
 
