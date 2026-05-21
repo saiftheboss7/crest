@@ -11,11 +11,6 @@ final class PrayerOverlayService {
     private(set) var overlayWindow: PrayerOverlayWindow?
     private(set) var activePrayer: Prayer?
 
-    var isOverlaySoundEnabled: Bool {
-        UserDefaults.standard.object(forKey: AppSettingsKey.prayerOverlaySoundEnabled) as? Bool
-            ?? AppSettingsDefault.prayerOverlaySoundEnabled
-    }
-
     private let warningMinutes: TimeInterval = 15
     private let wakeGraceMinutes: TimeInterval = 15
 
@@ -113,22 +108,21 @@ final class PrayerOverlayService {
     func triggerOverlay1TestNow() -> Bool {
         guard prayerTimeService.isEnabled else { return false }
 
-        let now = Date()
-
-        if let next = prayerTimeService.nextPrayer,
-           next != .sunrise {
-            dismissedPrayers.remove(next.rawValue)
-            fireOverlay(for: next, triggerTime: now)
-            return true
+        // Pick the same prayer the production scheduling path would have used.
+        let targetPrayer: Prayer?
+        if let next = prayerTimeService.nextPrayer, next != .sunrise {
+            targetPrayer = next
+        } else {
+            targetPrayer = Prayer.adjustable.first
         }
+        guard let prayer = targetPrayer else { return false }
 
-        if let fallbackPrayer = Prayer.adjustable.first {
-            dismissedPrayers.remove(fallbackPrayer.rawValue)
-            fireOverlay(for: fallbackPrayer, triggerTime: now)
-            return true
-        }
-
-        return false
+        // Bypass the production gates in `fireOverlay` (Isha→Fajr dedup, DND,
+        // dismissed-set) — the test button exists to verify the overlay UI
+        // renders, so it should always show.
+        dismissedPrayers.remove(prayer.rawValue)
+        showOverlayWindow(prayer: prayer, prayerTime: Date())
+        return true
     }
 
     // MARK: - Private
@@ -137,10 +131,27 @@ final class PrayerOverlayService {
         guard prayerTimeService.isEnabled else { return }
         guard !dismissedPrayers.contains(prayer.rawValue) else { return }
 
-        let respectDND = UserDefaults.standard.object(forKey: AppSettingsKey.overlayRespectDND) as? Bool
-            ?? AppSettingsDefault.overlayRespectDND
-        if respectDND {
-            // Skip if DND/Focus is active — NSDoNotDisturbEnabled is the legacy key
+        // Suppress Overlay 1 when the predecessor prayer's Overlay 2 covers the
+        // same moment. In the prayer schedule each waqt's end equals the next
+        // waqt's start (Isha→Fajr, Maghrib→Isha, Asr→Maghrib, Dhuhr→Asr), so
+        // Overlay 2 for prayer X (fires at X.end – warning) and Overlay 1 for
+        // prayer Y (fires at Y.start – warning) collide. The Overlay 2 already
+        // shows the upcoming prayer's name, so showing Overlay 1 back-to-back
+        // is redundant and confusing.
+        if predecessorOverlay2CoversThisTransition(prayer: prayer) {
+            scheduledTimers.removeValue(forKey: prayer.rawValue)
+            return
+        }
+
+        let defaults = UserDefaults.standard
+        let pKey = prayer.rawValue
+
+        let dnds = (defaults.dictionary(forKey: AppSettingsKey.prayerOverrideDND) as? [String: Bool])
+            ?? AppSettingsDefault.defaultPrayerOverrideDND
+        let overrideDND = dnds[pKey] ?? true
+
+        if !overrideDND {
+            // Respect DND/Focus is active — skip if DND active
             if let dndEnabled = UserDefaults(suiteName: "com.apple.notificationcenterui")?.bool(forKey: "doNotDisturb"),
                dndEnabled {
                 return
@@ -151,13 +162,39 @@ final class PrayerOverlayService {
         scheduledTimers.removeValue(forKey: prayer.rawValue)
     }
 
+    /// The prayer whose waqt immediately precedes `prayer`. Returns nil for
+    /// Dhuhr (its predecessor is the no-prayer gap after sunrise) and sunrise.
+    private func predecessor(of prayer: Prayer) -> Prayer? {
+        switch prayer {
+        case .fajr:    return .isha
+        case .sunrise: return nil
+        case .dhuhr:   return nil
+        case .asr:     return .dhuhr
+        case .maghrib: return .asr
+        case .isha:    return .maghrib
+        }
+    }
+
+    /// True when the predecessor prayer X exists, has Overlay 2 enabled, and
+    /// `X.endTime ≈ prayer.startTime` (so X's Overlay 2 and this Overlay 1
+    /// would fire at the same instant). 60-second tolerance covers Adhan's
+    /// jitter and per-prayer offset adjustments.
+    private func predecessorOverlay2CoversThisTransition(prayer: Prayer) -> Bool {
+        guard let pred = predecessor(of: prayer) else { return false }
+        guard let predEnd = prayerTimeService.prayerEndTime(pred) else { return false }
+        guard let thisStart = prayerTimeService.timeForPrayer(prayer) else { return false }
+        guard abs(predEnd.timeIntervalSince(thisStart)) < 60 else { return false }
+
+        let overlay2PerPrayer = (UserDefaults.standard.dictionary(forKey: AppSettingsKey.overlay2PerPrayer) as? [String: Bool])
+            ?? AppSettingsDefault.defaultOverlay2PerPrayer
+        return overlay2PerPrayer[pred.rawValue] ?? true
+    }
+
     private func showOverlayWindow(prayer: Prayer, prayerTime: Date) {
         dismissOverlayWindowOnly()
 
-        if isOverlaySoundEnabled {
-            Task { @MainActor in
-                AlertSoundService.shared.playPrayerOverlayAlert()
-            }
+        Task { @MainActor in
+            AlertSoundService.shared.playPrayerOverlayAlert(for: prayer)
         }
 
         activePrayer = prayer

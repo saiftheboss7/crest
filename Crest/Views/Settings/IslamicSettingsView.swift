@@ -19,6 +19,12 @@ struct IslamicSettingsView: View {
     @AppStorage(AppSettingsKey.staticLatitude) private var staticLatitude = AppSettingsDefault.staticLatitude
     @AppStorage(AppSettingsKey.staticLongitude) private var staticLongitude = AppSettingsDefault.staticLongitude
     @AppStorage(AppSettingsKey.prayerOverlaySoundEnabled) private var prayerOverlaySoundEnabled = AppSettingsDefault.prayerOverlaySoundEnabled
+    @AppStorage(AppSettingsKey.selectedCityName) private var selectedCityName = AppSettingsDefault.selectedCityName
+
+    // Global settings for late reminders
+    @AppStorage("lateRemindersEnabled") private var lateRemindersEnabled = true
+    @AppStorage("lateReminderOffsetGlobal") private var lateReminderOffsetGlobal = 15
+    @AppStorage("lateReminderRespectDNDGlobal") private var lateReminderRespectDNDGlobal = true
 
     @State private var adjustments: [String: Int] = AppSettingsDefault.defaultPrayerAdjustments
     @State private var notifPerPrayer: [String: Bool] = AppSettingsDefault.defaultPrayerNotificationPerPrayer
@@ -26,140 +32,608 @@ struct IslamicSettingsView: View {
     @State private var overlay1PerPrayer: [String: Bool] = AppSettingsDefault.defaultOverlay1PerPrayer
     @State private var overlay2PerPrayer: [String: Bool] = AppSettingsDefault.defaultOverlay2PerPrayer
     @State private var jamaatTimes: [String: String] = AppSettingsDefault.defaultJamaatTimes
+    @State private var jamaatOverridePerPrayer: [String: Bool] = [:]
+
+    @State private var searchQuery = ""
+    @State private var activePrayerSheet: Prayer? = nil
+    @State private var timeAdjustmentsExpanded = false
+
+    @AppStorage("locationUpdateFrequency") private var locationUpdateFrequency = "6h"
 
     var body: some View {
         Form {
-            Section {
-                Toggle("Enable Islamic Mode", isOn: $islamicModeEnabled)
-                    .onChange(of: islamicModeEnabled) { _, _ in
-                        prayerTimeService.recompute()
-                        notificationService.scheduleAll()
+            // Callout / Hero Card inside the Form
+            VStack(spacing: 0) {
+                HStack(spacing: 16) {
+                    Text("🌙")
+                        .font(.system(size: 24))
+                        .frame(width: 44, height: 44)
+                        .background(
+                            LinearGradient(
+                                colors: [Color(red: 212/255, green: 168/255, blue: 77/255), Color(red: 184/255, green: 138/255, blue: 46/255)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .cornerRadius(10)
+                        .shadow(color: Color(red: 184/255, green: 138/255, blue: 46/255).opacity(0.3), radius: 3, x: 0, y: 1.5)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Islamic Mode")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        Text("Full-screen prayer reminders, late-prayer alerts before waqt ends, and Hijri date in your menu bar.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(nil)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
+                    
+                    Spacer()
+                    
+                    Toggle("", isOn: $islamicModeEnabled)
+                        .toggleStyle(.switch)
+                        .labelsHidden()
+                        .onChange(of: islamicModeEnabled) { _, isOn in
+                            if isOn {
+                                // Bring late-reminder defaults onto the new "on for
+                                // every prayer, 15 min" spec. One-time per install.
+                                runLateReminderDefaultsMigrationIfNeeded()
+                                if !staticLocationEnabled {
+                                    locationService.requestLocation()
+                                }
+                                // Pick up the freshly-seeded state in the local view
+                                // bindings before rescheduling.
+                                loadPerPrayerSettings()
+                            }
+                            prayerTimeService.recompute()
+                            notificationService.scheduleAll()
+                            onOverlaySettingsChanged?()
+                        }
+                }
+                .padding(.vertical, 12)
+                .padding(.horizontal, 14)
             }
+            .background(Color(NSColor.controlBackgroundColor))
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.secondary.opacity(0.15), lineWidth: 1)
+            )
+            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 8, trailing: 0))
+            .listRowBackground(Color.clear)
 
             if islamicModeEnabled {
                 locationSection
                 calculationSection
-                adjustmentsSection
-                jamaatSection
+                prayerRemindersSection
+                latePrayerReminderSection
                 hijriSection
-                notificationsSection
-                overlaySection
+                advancedSection
+                jamaatTimesSection
             }
         }
         .formStyle(.grouped)
-        .onAppear { loadPerPrayerSettings() }
+        .onAppear {
+            // Run the late-reminder defaults migration here too — covers users
+            // who already have Islamic Mode enabled (so the toggle handler
+            // never re-fires) but haven't yet had the new "on for every prayer,
+            // 15 min" defaults written. Idempotent via the migration key.
+            runLateReminderDefaultsMigrationIfNeeded()
+            loadPerPrayerSettings()
+        }
+        .sheet(item: $activePrayerSheet) { prayer in
+            PrayerSettingsSheetView(
+                prayer: prayer,
+                prayerTimeService: prayerTimeService,
+                notificationService: notificationService
+            )
+            .onDisappear {
+                loadPerPrayerSettings()
+            }
+        }
     }
-
-    // MARK: - Location
+    
+    // MARK: - Sections
 
     private var locationMissing: Bool {
         prayerTimeService.todayPrayers.isEmpty
     }
 
-    private var locationSection: some View {
-        Section {
-            if locationMissing {
-                Label("Prayer times need a location", systemImage: "location.slash.fill")
-                    .foregroundStyle(.orange)
-            }
+    /// Shown inside the Automatic-location card when Wi-Fi is off. Macs have no
+    /// GPS — without Wi-Fi the system has nothing to triangulate against, so
+    /// "Detecting location…" would just spin forever. Route the user to Manual.
+    private var wifiOffBanner: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "wifi.slash")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(.white)
+                .frame(width: 32, height: 32)
+                .background(
+                    LinearGradient(
+                        colors: [Color.orange, Color(red: 255/255, green: 149/255, blue: 0/255)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .cornerRadius(8)
 
-            Toggle("Use static location", isOn: $staticLocationEnabled)
-                .onChange(of: staticLocationEnabled) { _, _ in
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Wi-Fi is off — automatic location won't work")
+                    .font(.body)
+                    .fontWeight(.semibold)
+                Text("Macs have no GPS. macOS determines location by scanning Wi-Fi networks. With Wi-Fi off, switch to Manual mode and pick your city — prayer times work identically off a static location.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(nil)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Button {
+                    staticLocationEnabled = true
                     recomputeAndReschedule()
+                } label: {
+                    Text("Switch to Manual")
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.orange)
+                        .cornerRadius(6)
                 }
+                .buttonStyle(.plain)
+                .padding(.top, 4)
+            }
+        }
+        .padding(14)
+        .background(
+            LinearGradient(
+                colors: [Color.orange.opacity(0.10), Color.orange.opacity(0.04)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.orange.opacity(0.35), lineWidth: 1)
+        )
+        .cornerRadius(10)
+        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 8, trailing: 0))
+        .listRowBackground(Color.clear)
+    }
 
-            if staticLocationEnabled {
-                HStack {
-                    Text("Latitude")
-                    Spacer()
-                    TextField("e.g. 40.7128", text: $staticLatitude)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 160)
-                        .onChange(of: staticLatitude) { _, newValue in
-                            staticLatitude = cleanedCoordinateInput(newValue)
-                            recomputeAndReschedule()
-                        }
-                }
-
-                HStack {
-                    Text("Longitude")
-                    Spacer()
-                    TextField("e.g. -74.0060", text: $staticLongitude)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 160)
-                        .onChange(of: staticLongitude) { _, newValue in
-                            staticLongitude = cleanedCoordinateInput(newValue)
-                            recomputeAndReschedule()
-                        }
-                }
-
-                if !isValidStaticCoordinates {
-                    Text("Enter a valid latitude (-90 to 90) and longitude (-180 to 180).")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+    private var locationSection: some View {
+        Section(header: Text("LOCATION").font(.caption2).fontWeight(.semibold).foregroundStyle(.secondary)) {
+            Picker("Location Mode", selection: $staticLocationEnabled) {
+                Text("Automatic").tag(false)
+                Text("Manual").tag(true)
+            }
+            .pickerStyle(.segmented)
+            .onChange(of: staticLocationEnabled) { _, _ in
+                recomputeAndReschedule()
             }
 
-            if !staticLocationEnabled,
-               let lat = locationService.latitude,
-               let lon = locationService.longitude {
-                HStack {
-                    Text("Coordinates")
-                    Spacer()
-                    Text(String(format: "%.4f, %.4f", lat, lon))
-                        .foregroundStyle(.secondary)
-                        .font(.callout.monospacedDigit())
-                }
-            }
+            if !staticLocationEnabled {
+                // AUTOMATIC LOCATION CARD
+                if locationService.canRequestLiveLocation {
+                    // WI-FI OFF BANNER — Macs have no GPS. With Wi-Fi off, CoreLocation
+                    // simply cannot determine location. Surface this clearly and route
+                    // the user to Manual mode rather than spinning on "Detecting…".
+                    if !locationService.isWiFiOn {
+                        wifiOffBanner
+                    }
 
-            if !staticLocationEnabled, locationService.needsSettingsAction {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(locationService.permissionHelpText)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    HStack(spacing: 10) {
-                        Button("Open System Settings") {
-                            locationService.openLocationPrivacySettings()
+                    // Granted state
+                    VStack(spacing: 0) {
+                        // 1. Status row
+                        HStack(spacing: 8) {
+                            PulsatingDot()
+                            Text("Using current location")
+                                .font(.body)
+                                .fontWeight(.medium)
+                            Spacer()
+                            if let lat = locationService.latitude, let lon = locationService.longitude {
+                                Text(String(format: "%.4f, %.4f%@", lat, lon, locationService.cityName.map { " · \($0)" } ?? ""))
+                                    .font(.caption.monospacedDigit())
+                                    .foregroundStyle(.secondary)
+                            } else if locationService.isFetching {
+                                HStack(spacing: 6) {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                    Text("Detecting location…")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            } else if let err = locationService.lastError {
+                                Text("Failed: \(err)")
+                                    .font(.caption)
+                                    .foregroundStyle(.orange)
+                                    .lineLimit(2)
+                                    .multilineTextAlignment(.trailing)
+                            } else {
+                                Text("Idle — tap Refresh")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 14)
 
-                        Button("Try Again") {
-                            locationService.requestLocation()
+                        Divider()
+                            .padding(.horizontal, 14)
+
+                        // 2. Refresh row
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Refresh location")
+                                    .font(.body)
+                                Text(locationService.lastError ?? "Last checked recently")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+                            Spacer()
+                            Button("Refresh") {
+                                locationService.requestLocation()
+                                recomputeAndReschedule()
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(locationService.isFetching)
+                        }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 14)
+                        
+                        Divider()
+                            .padding(.horizontal, 14)
+                        
+                        // 3. Update Frequency row
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Update frequency")
+                                    .font(.body)
+                                Text("How often Crest re-checks your location")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Picker("", selection: $locationUpdateFrequency) {
+                                Text("Every 6 hours").tag("6h")
+                                Text("Every 12 hours").tag("12h")
+                                Text("Daily").tag("24h")
+                            }
+                            .pickerStyle(.menu)
+                            .frame(width: 140)
+                            .labelsHidden()
+                            .onChange(of: locationUpdateFrequency) { _, _ in
+                                locationService.setupFrequencyTimer()
+                            }
+                        }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 14)
+                    }
+                    .background(Color(NSColor.controlBackgroundColor))
+                    .cornerRadius(10)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.secondary.opacity(0.15), lineWidth: 1)
+                    )
+                    .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                    .listRowBackground(Color.clear)
+                } else {
+                    // Denied/Restricted/Not Determined state
+                    VStack(spacing: 0) {
+                        // Top banner with gradient background
+                        HStack(alignment: .top, spacing: 12) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 16))
+                                .foregroundColor(.white)
+                                .frame(width: 32, height: 32)
+                                .background(
+                                    LinearGradient(
+                                        colors: [Color.orange, Color(red: 255/255, green: 149/255, blue: 0/255)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .cornerRadius(8)
+                                .shadow(color: Color.orange.opacity(0.3), radius: 2, x: 0, y: 1)
+                            
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(locationService.authorizationStatus == .notDetermined ? "Location permission required" : "Location access required")
+                                    .font(.body)
+                                    .fontWeight(.semibold)
+                                Text(locationService.authorizationStatus == .notDetermined 
+                                     ? "Crest needs Location Services to calculate accurate prayer times for your area. Please allow access when prompted, or switch to Manual."
+                                     : "Crest needs Location Services to calculate accurate prayer times for your area. Grant access in System Settings, or switch to Manual to enter your city.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(nil)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        .padding(14)
+                        .background(
+                            LinearGradient(
+                                colors: [Color.orange.opacity(0.08), Color.orange.opacity(0.03)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        
+                        if locationService.authorizationStatus != .notDetermined {
+                            Divider()
+                            
+                            // Steps List
+                            VStack(alignment: .leading, spacing: 10) {
+                                HStack(alignment: .top, spacing: 10) {
+                                    Text("1")
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.blue)
+                                        .frame(width: 18, height: 18)
+                                        .background(Color.blue.opacity(0.12))
+                                        .clipShape(Circle())
+                                    Text("Click **Open System Settings** below")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                
+                                HStack(alignment: .top, spacing: 10) {
+                                    Text("2")
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.blue)
+                                        .frame(width: 18, height: 18)
+                                        .background(Color.blue.opacity(0.12))
+                                        .clipShape(Circle())
+                                    HStack(spacing: 4) {
+                                        Text("Go to")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                        Text("Privacy & Security")
+                                            .font(.caption)
+                                            .fontWeight(.medium)
+                                            .padding(.horizontal, 4)
+                                            .padding(.vertical, 1)
+                                            .background(Color.white.opacity(0.8))
+                                            .cornerRadius(4)
+                                            .shadow(color: .black.opacity(0.08), radius: 1, x: 0, y: 0.5)
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 8))
+                                            .foregroundStyle(.tertiary)
+                                        Text("Location Services")
+                                            .font(.caption)
+                                            .fontWeight(.medium)
+                                            .padding(.horizontal, 4)
+                                            .padding(.vertical, 1)
+                                            .background(Color.white.opacity(0.8))
+                                            .cornerRadius(4)
+                                            .shadow(color: .black.opacity(0.08), radius: 1, x: 0, y: 0.5)
+                                    }
+                                }
+                                
+                                HStack(alignment: .top, spacing: 10) {
+                                    Text("3")
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.blue)
+                                        .frame(width: 18, height: 18)
+                                        .background(Color.blue.opacity(0.12))
+                                        .clipShape(Circle())
+                                    HStack(spacing: 4) {
+                                        Text("Find")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                        Text("Crest")
+                                            .font(.caption)
+                                            .fontWeight(.medium)
+                                            .padding(.horizontal, 4)
+                                            .padding(.vertical, 1)
+                                            .background(Color.white.opacity(0.8))
+                                            .cornerRadius(4)
+                                            .shadow(color: .black.opacity(0.08), radius: 1, x: 0, y: 0.5)
+                                        Text("in the list and turn it on")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                            .padding(14)
+                        }
+                        
+                        Divider()
+                        
+                        // Actions Row
+                        HStack(spacing: 10) {
+                            if locationService.authorizationStatus == .notDetermined {
+                                Button(action: {
+                                    locationService.requestLocation()
+                                }) {
+                                    Text("Allow Access")
+                                        .fontWeight(.medium)
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(Color.blue)
+                                        .cornerRadius(6)
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                Button(action: {
+                                    locationService.openLocationPrivacySettings()
+                                }) {
+                                    Text("Open System Settings")
+                                        .fontWeight(.medium)
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(Color.blue)
+                                        .cornerRadius(6)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            
+                            Button(action: {
+                                staticLocationEnabled = true
+                            }) {
+                                Text("Switch to Manual")
+                                    .fontWeight(.medium)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(Color(NSColor.controlColor))
+                                    .cornerRadius(6)
+                            }
+                            .buttonStyle(.bordered)
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                locationService.requestLocation()
+                            }) {
+                                Text("Re-check permission")
+                                    .font(.caption)
+                                    .foregroundColor(.blue)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 14)
+                        .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
+                    }
+                    .background(Color(NSColor.controlBackgroundColor))
+                    .cornerRadius(10)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.orange.opacity(0.35), lineWidth: 1)
+                    )
+                    .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                    .listRowBackground(Color.clear)
+                }
+                
+                // Help text for Automatic
+                Text("Crest uses macOS Location Services to detect your city. Your location stays on this Mac and is never sent to any server.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .listRowInsets(EdgeInsets(top: 2, leading: 4, bottom: 4, trailing: 4))
+                    .listRowBackground(Color.clear)
+            } else {
+                // MANUAL LOCATION CARD
+                VStack(spacing: 0) {
+                    // Selected location bar
+                    if !selectedCityName.isEmpty {
+                        HStack(spacing: 8) {
+                            Text("📍")
+                                .font(.system(size: 13))
+                            Text(selectedCityName)
+                                .fontWeight(.medium)
+                            Spacer()
+                            if !staticLatitude.isEmpty && !staticLongitude.isEmpty {
+                                Text("\(staticLatitude), \(staticLongitude)")
+                                    .font(.caption.monospacedDigit())
+                                    .foregroundStyle(.secondary)
+                            }
+                            Button(action: {
+                                selectedCityName = ""
+                                staticLatitude = ""
+                                staticLongitude = ""
+                                recomputeAndReschedule()
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 14)
+                        .background(Color.blue.opacity(0.06))
+                    }
+                    
+                    // Search box (Visible if no city selected, OR always visible below to allow updating)
+                    if selectedCityName.isEmpty {
+                        HStack {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundStyle(.secondary)
+                            TextField("Search city or postal code", text: $searchQuery)
+                                .textFieldStyle(.plain)
+                                .multilineTextAlignment(.leading)
+                                .labelsHidden()
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 14)
+                        .popover(isPresented: Binding(
+                            get: { !searchQuery.isEmpty },
+                            set: { if !$0 { searchQuery = "" } }
+                        ), arrowEdge: .bottom) {
+                            VStack(alignment: .leading, spacing: 6) {
+                                let filtered = CityPreset.database.filter {
+                                    $0.name.localizedCaseInsensitiveContains(searchQuery)
+                                }
+                                if !filtered.isEmpty {
+                                    ScrollView {
+                                        VStack(alignment: .leading, spacing: 0) {
+                                            ForEach(filtered) { preset in
+                                                HStack {
+                                                    Text(preset.flag)
+                                                    Text(preset.name)
+                                                        .foregroundStyle(.primary)
+                                                    Spacer()
+                                                    Text(String(format: "%.4f, %.4f", preset.latitude, preset.longitude))
+                                                        .font(.caption.monospacedDigit())
+                                                        .foregroundStyle(.secondary)
+                                                }
+                                                .padding(.horizontal, 10)
+                                                .padding(.vertical, 6)
+                                                .background(Color(NSColor.controlBackgroundColor).opacity(0.001))
+                                                .contentShape(Rectangle())
+                                                .onTapGesture {
+                                                    selectedCityName = preset.name
+                                                    staticLatitude = String(preset.latitude)
+                                                    staticLongitude = String(preset.longitude)
+                                                    searchQuery = ""
+                                                    recomputeAndReschedule()
+                                                }
+                                                
+                                                if preset != filtered.last {
+                                                    Divider()
+                                                }
+                                            }
+                                        }
+                                    }
+                                    .frame(maxHeight: 200)
+                                } else {
+                                    Text("No matching cities found.")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .padding(10)
+                                }
+                            }
+                            .frame(width: 320)
                         }
                     }
                 }
-            }
-
-            if !staticLocationEnabled,
-               !locationService.needsSettingsAction,
-               locationService.coordinates == nil,
-               !locationService.permissionHelpText.isEmpty {
-                Text(locationService.permissionHelpText)
+                .background(Color(NSColor.controlBackgroundColor))
+                .cornerRadius(10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.secondary.opacity(0.15), lineWidth: 1)
+                )
+                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                .listRowBackground(Color.clear)
+                
+                // Help text for Manual
+                Text("Manual location overrides automatic detection. Useful if you're traveling or don't want to grant Location Services access.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-            }
-
-            Button("Refresh Location") {
-                locationService.requestLocation()
-            }
-            .disabled(staticLocationEnabled)
-        } header: {
-            HStack(spacing: 4) {
-                Text("Location")
-                if locationMissing {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.orange)
-                        .font(.caption)
-                }
+                    .listRowInsets(EdgeInsets(top: 2, leading: 4, bottom: 4, trailing: 4))
+                    .listRowBackground(Color.clear)
             }
         }
     }
 
-    // MARK: - Calculation
-
     private var calculationSection: some View {
-        Section("Calculation") {
+        Section(header: Text("CALCULATION").font(.caption2).fontWeight(.semibold).foregroundStyle(.secondary)) {
             Picker("Method", selection: $calculationMethod) {
                 ForEach(CalculationMethodOption.allCases) { option in
                     Text(option.displayName).tag(option.rawValue)
@@ -183,98 +657,125 @@ struct IslamicSettingsView: View {
         }
     }
 
-    // MARK: - Time Adjustments
-
-    private var adjustmentsSection: some View {
-        Section("Time Adjustments") {
+    private var prayerRemindersSection: some View {
+        Section(header: Text("PRAYER REMINDERS").font(.caption2).fontWeight(.semibold).foregroundStyle(.secondary)) {
             ForEach(Prayer.adjustable) { prayer in
-                let binding = Binding<Int>(
-                    get: { adjustments[prayer.rawValue] ?? 0 },
-                    set: { newValue in
-                        adjustments[prayer.rawValue] = newValue
-                        saveAdjustments()
+                HStack(spacing: 12) {
+                    Button(action: { activePrayerSheet = prayer }) {
+                        HStack(spacing: 12) {
+                            Text(prayer.emoji)
+                                .font(.title3)
+                                .foregroundColor(prayer == .fajr ? Color(red: 94/255, green: 124/255, blue: 226/255) : .primary)
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(prayer.displayName)
+                                    .font(.body.weight(.medium))
+                                    .foregroundStyle(.primary)
+                                
+                                let timeRange = getPrayerTimeString(prayer)
+                                if !timeRange.isEmpty {
+                                    Text(timeRange)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            
+                            Spacer()
+                            
+                            Text(getPrayerTag(prayer))
+                                .font(.caption2)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Color.primary.opacity(0.06))
+                                .cornerRadius(10)
+                                .foregroundStyle(.secondary)
+                        }
+                        .contentShape(Rectangle())
                     }
-                )
-                Stepper(
-                    "\(prayer.displayName): \(signedMinutes(adjustments[prayer.rawValue] ?? 0))",
-                    value: binding,
-                    in: -30...30
-                )
-            }
-        }
-    }
-
-    // MARK: - Jamaat Times
-
-    private var jamaatSection: some View {
-        Group {
-            Section {
-                Toggle("Enable Jamaat Times", isOn: $jamaatTimesEnabled)
-                    .onChange(of: jamaatTimesEnabled) { _, _ in
-                        ensureJamaatTimesPersisted()
-                        prayerTimeService.recompute()
-                        notificationService.scheduleAll()
-                    }
-
-                if jamaatTimesEnabled {
-                    ForEach(Prayer.adjustable) { prayer in
-                        jamaatTimeRow(prayer)
-                    }
+                    .buttonStyle(.plain)
+                    
+                    Toggle("", isOn: prayerNotifBinding(prayer))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .onTapGesture {
+                            activePrayerSheet = prayer
+                        }
                 }
-            } header: {
-                Text("Jamaat Times")
-            } footer: {
-                Text("Set jamaat times for your mosque. Enable Alert to receive a fullscreen reminder when each jamaat begins.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                .padding(.vertical, 2)
             }
-
-        }
-    }
-
-    private func jamaatTimeRow(_ prayer: Prayer) -> some View {
-        let timeBinding = Binding<Date>(
-            get: { jamaatDate(for: prayer) },
-            set: { newValue in
-                jamaatTimes[prayer.rawValue] = storedJamaatTime(from: newValue)
-                saveJamaatTimes()
-            }
-        )
-
-        let alertBinding = Binding<Bool>(
-            get: { overlay1PerPrayer[prayer.rawValue] ?? false },
-            set: { newValue in
-                overlay1PerPrayer[prayer.rawValue] = newValue
-                UserDefaults.standard.set(overlay1PerPrayer, forKey: AppSettingsKey.overlay1PerPrayer)
-                onOverlaySettingsChanged?()
-            }
-        )
-
-        return HStack {
-            Image(systemName: prayer.systemImage)
-                .frame(width: 20)
-                .foregroundStyle(prayer.themeColor)
-            Text(prayer.displayName)
-            Spacer()
-            DatePicker(
-                "",
-                selection: timeBinding,
-                displayedComponents: .hourAndMinute
-            )
-            .labelsHidden()
-            Toggle("", isOn: alertBinding)
-                .toggleStyle(.checkbox)
-                .labelsHidden()
-            Text("Alert")
+            
+            Text("Click any prayer row or its chevron to configure custom sounds, notifications, late reminders, volume, and Focus modes.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
     }
 
-    // MARK: - Hijri Date
+    private var latePrayerReminderSection: some View {
+        Section(header: Text("LATE PRAYER REMINDER").font(.caption2).fontWeight(.semibold).foregroundStyle(.secondary)) {
+            HStack {
+                Text("⏰")
+                    .font(.title3)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Remind before waqt ends")
+                        .fontWeight(.medium)
+                    Text("A final full-screen alert before each prayer window closes")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Toggle("", isOn: $lateRemindersEnabled)
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+                    .onChange(of: lateRemindersEnabled) { _, isOn in
+                        // Global toggle = mass-set shortcut. Writes the same Bool
+                        // to every per-prayer entry. Individual toggles can be
+                        // tweaked afterwards and persist until the user flips
+                        // the global toggle again.
+                        let target: [String: Bool] = [
+                            "fajr": isOn, "dhuhr": isOn, "asr": isOn, "maghrib": isOn, "isha": isOn
+                        ]
+                        UserDefaults.standard.set(target, forKey: AppSettingsKey.overlay2PerPrayer)
+                        overlay2PerPrayer = target
+                        recomputeAndReschedule()
+                        onOverlaySettingsChanged?()
+                    }
+            }
+            
+            if lateRemindersEnabled {
+                HStack {
+                    Text("Reminder time")
+                        .font(.subheadline)
+                    Spacer()
+                    Picker("", selection: $lateReminderOffsetGlobal) {
+                        Text("15 min").tag(15)
+                        Text("30 min").tag(30)
+                        Text("45 min").tag(45)
+                        Text("1 hour").tag(60)
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 250)
+                    .onChange(of: lateReminderOffsetGlobal) { _, _ in
+                        recomputeAndReschedule()
+                    }
+                }
+                .padding(.leading, 12)
+                
+                Toggle("Respect Do Not Disturb", isOn: $lateReminderRespectDNDGlobal)
+                    .padding(.leading, 12)
+                    .onChange(of: lateReminderRespectDNDGlobal) { _, _ in
+                        recomputeAndReschedule()
+                    }
+            }
+        }
+    }
 
     private var hijriSection: some View {
-        Section("Hijri Date") {
+        Section(header: Text("HIJRI DATE").font(.caption2).fontWeight(.semibold).foregroundStyle(.secondary)) {
             Stepper(
                 "Date offset: \(signedDays(hijriDateOffset))",
                 value: $hijriDateOffset,
@@ -286,66 +787,255 @@ struct IslamicSettingsView: View {
         }
     }
 
-    // MARK: - Notifications
-
-    private var notificationsSection: some View {
-        Section("Notifications") {
-            Toggle("Prayer notifications", isOn: $notificationsEnabled)
-                .onChange(of: notificationsEnabled) { _, newValue in
-                    if newValue && !notificationService.isAuthorized {
-                        notificationService.requestAuthorization()
-                    }
-                    notificationService.scheduleAll()
-                }
-
-            if notificationsEnabled {
-                ForEach(Prayer.adjustable) { prayer in
-                    HStack {
-                        Toggle(prayer.displayName, isOn: prayerNotifBinding(prayer))
-
-                        Spacer()
-
-                        if Bundle.main.url(forResource: "adhan", withExtension: "caf") != nil {
-                            Toggle("Adhan", isOn: adhanBinding(prayer))
-                                .toggleStyle(.switch)
-                                .labelsHidden()
-                            Text("Adhan")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+    private var advancedSection: some View {
+        Section(header: Text("ADVANCED").font(.caption2).fontWeight(.semibold).foregroundStyle(.secondary)) {
+            DisclosureGroup(
+                isExpanded: $timeAdjustmentsExpanded,
+                content: {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Fine-tune calculated prayer times by adding or subtracting minutes.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.vertical, 4)
+                        
+                        ForEach(Prayer.adjustable) { prayer in
+                            let binding = Binding<Int>(
+                                get: { adjustments[prayer.rawValue] ?? 0 },
+                                set: { newValue in
+                                    adjustments[prayer.rawValue] = newValue
+                                    saveAdjustments()
+                                }
+                            )
+                            HStack {
+                                Text(prayer.displayName)
+                                Spacer()
+                                Stepper(
+                                    "\(signedMinutes(adjustments[prayer.rawValue] ?? 0))",
+                                    value: binding,
+                                    in: -30...30
+                                )
+                            }
                         }
                     }
+                    .padding(.vertical, 4)
+                },
+                label: {
+                    Label("Time adjustments", systemImage: "slider.horizontal.3")
+                        .fontWeight(.medium)
+                }
+            )
+        }
+    }
+
+    private var jamaatTimesSection: some View {
+        Section(header: Text("JAMAAT TIMES").font(.caption2).fontWeight(.semibold).foregroundStyle(.secondary)) {
+            HStack {
+                Text("🕌")
+                    .font(.title3)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Override prayer starting time with Jamaat times")
+                        .fontWeight(.medium)
+                    Text("When enabled, alerts fire at your masjid's congregation time instead of the calculated prayer start")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Toggle("", isOn: $jamaatTimesEnabled)
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+                    .onChange(of: jamaatTimesEnabled) { _, _ in
+                        ensureJamaatTimesPersisted()
+                        prayerTimeService.recompute()
+                        notificationService.scheduleAll()
+                    }
+            }
+            
+            if jamaatTimesEnabled {
+                ForEach(Prayer.adjustable) { prayer in
+                    jamaatTimeRow(prayer)
                 }
             }
         }
     }
 
-    // MARK: - Overlay
+    private func jamaatTimeRow(_ prayer: Prayer) -> some View {
+        let isOverridden = jamaatOverridePerPrayer[prayer.rawValue] ?? false
+        
+        let timeBinding = Binding<Date>(
+            get: { jamaatDate(for: prayer) },
+            set: { newValue in
+                jamaatTimes[prayer.rawValue] = storedJamaatTime(from: newValue)
+                saveJamaatTimes()
+            }
+        )
 
-    private var overlaySection: some View {
-        Section("End-of-Prayer Reminders") {
-            Toggle("Respect Do Not Disturb", isOn: $respectDND)
-            Toggle("Play sound on start reminder", isOn: $prayerOverlaySoundEnabled)
+        let overrideBinding = Binding<Bool>(
+            get: { isOverridden },
+            set: { newValue in
+                jamaatOverridePerPrayer[prayer.rawValue] = newValue
+                UserDefaults.standard.set(jamaatOverridePerPrayer, forKey: "jamaatOverridePerPrayer")
+                saveJamaatTimes()
+            }
+        )
 
-            ForEach(Prayer.adjustable) { prayer in
-                HStack {
-                    Image(systemName: prayer.systemImage)
-                        .frame(width: 20)
-                        .foregroundStyle(prayer.themeColor)
-                    Text(prayer.displayName)
-                    Spacer()
-                    Toggle("", isOn: overlay2Binding(prayer))
-                        .toggleStyle(.checkbox)
-                        .labelsHidden()
+        let originalTime = formatTime(prayerTimeService.timeForPrayer(prayer) ?? Date())
+        let jamaatTimeStr = formatTime(jamaatDate(for: prayer))
+
+        return HStack(spacing: 12) {
+            Text(prayer.emoji)
+                .font(.title3)
+                .foregroundColor(prayer == .fajr ? Color(red: 94/255, green: 124/255, blue: 226/255) : .primary)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(prayer.displayName)
+                    .font(.body.weight(.medium))
+                
+                if isOverridden {
+                    HStack(spacing: 4) {
+                        Text("Starts \(originalTime)")
+                            .strikethrough()
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.secondary)
+                        Text(jamaatTimeStr)
+                            .font(.caption)
+                            .foregroundStyle(.blue)
+                    }
+                } else {
+                    Text("Starts \(originalTime)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
-
-            Text("Receive a reminder before each prayer window ends.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            
+            Spacer()
+            
+            DatePicker(
+                "",
+                selection: timeBinding,
+                displayedComponents: .hourAndMinute
+            )
+            .labelsHidden()
+            .disabled(!isOverridden)
+            
+            Toggle("", isOn: overrideBinding)
+                .toggleStyle(.switch)
+                .labelsHidden()
         }
+        .padding(.vertical, 4)
     }
 
     // MARK: - Helpers
+
+    private func formatTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        return formatter.string(from: date)
+    }
+
+    private func getPrayerSummary(_ prayer: Prayer) -> String {
+        let defaults = UserDefaults.standard
+        let pKey = prayer.rawValue
+        
+        let notifPerPrayer = (defaults.dictionary(forKey: AppSettingsKey.prayerNotificationPerPrayer) as? [String: Bool])
+            ?? AppSettingsDefault.defaultPrayerNotificationPerPrayer
+        let alertsEnabled = notifPerPrayer[pKey] ?? true
+        
+        if !alertsEnabled {
+            return "Reminders disabled"
+        }
+        
+        var options: [String] = []
+        
+        let o1PerPrayer = (defaults.dictionary(forKey: AppSettingsKey.overlay1PerPrayer) as? [String: Bool])
+            ?? AppSettingsDefault.defaultOverlay1PerPrayer
+        if o1PerPrayer[pKey] ?? true {
+            options.append("Start alert")
+        }
+        
+        let o2PerPrayer = (defaults.dictionary(forKey: AppSettingsKey.overlay2PerPrayer) as? [String: Bool])
+            ?? AppSettingsDefault.defaultOverlay2PerPrayer
+        if o2PerPrayer[pKey] ?? true {
+            let offsets = (defaults.dictionary(forKey: AppSettingsKey.prayerLateReminderOffset) as? [String: Int])
+                ?? AppSettingsDefault.defaultPrayerLateReminderOffset
+            let offset = offsets[pKey] ?? 30
+            options.append("Late alert (\(offset)m)")
+        }
+        
+        let sounds = (defaults.dictionary(forKey: AppSettingsKey.prayerSoundName) as? [String: String])
+            ?? AppSettingsDefault.defaultPrayerSoundName
+        let soundName = sounds[pKey] ?? "Soft Chime"
+        if soundName != "Silent" {
+            options.append(soundName)
+        } else {
+            options.append("Silent")
+        }
+        
+        return options.isEmpty ? "Visual only" : options.joined(separator: ", ")
+    }
+
+    private func getPrayerTimeString(_ prayer: Prayer) -> String {
+        let list = prayerTimeService.todayPrayers
+        guard !list.isEmpty else { return "" }
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        
+        guard let pTime = list.first(where: { $0.prayer == prayer }) else { return "" }
+        let startStr = formatter.string(from: pTime.time)
+        
+        var endStr = ""
+        if prayer == .fajr {
+            if let sunrise = list.first(where: { $0.prayer == .sunrise }) {
+                endStr = "ends \(formatter.string(from: sunrise.time))"
+            }
+        } else {
+            let adjustable = Prayer.adjustable
+            if let currentIndex = adjustable.firstIndex(of: prayer) {
+                if currentIndex < adjustable.count - 1 {
+                    let nextPrayerType = adjustable[currentIndex + 1]
+                    if let nextTime = list.first(where: { $0.prayer == nextPrayerType }) {
+                        endStr = "ends \(formatter.string(from: nextTime.time))"
+                    }
+                } else {
+                    if let firstFajr = list.first(where: { $0.prayer == .fajr }) {
+                        let tomorrowFajr = firstFajr.time.addingTimeInterval(24 * 3600)
+                        endStr = "ends \(formatter.string(from: tomorrowFajr))"
+                    }
+                }
+            }
+        }
+        
+        if endStr.isEmpty {
+            return startStr
+        } else {
+            return "\(startStr) • \(endStr)"
+        }
+    }
+
+    private func getPrayerTag(_ prayer: Prayer) -> String {
+        let pKey = prayer.rawValue
+        let hasStart = overlay1PerPrayer[pKey] ?? true
+        let hasLate = overlay2PerPrayer[pKey] ?? true
+        
+        let alertsEnabled = notifPerPrayer[pKey] ?? true
+        if !alertsEnabled {
+            return "Disabled"
+        }
+        
+        if hasStart && hasLate {
+            return "Start & late"
+        } else if hasStart {
+            return "Start only"
+        } else if hasLate {
+            return "Late only"
+        } else {
+            return "Visual only"
+        }
+    }
 
     private func signedMinutes(_ value: Int) -> String {
         value == 0 ? "0 min" : (value > 0 ? "+\(value) min" : "\(value) min")
@@ -417,6 +1107,28 @@ struct IslamicSettingsView: View {
         defaults.set(jamaatTimes, forKey: AppSettingsKey.jamaatTimes)
     }
 
+    /// One-time migration that brings every install onto the new late-reminder
+    /// defaults: every prayer's late reminder ON, 15-minute offset, respecting
+    /// DND. Older builds shipped `defaultOverlay2PerPrayer` as all-false and
+    /// `defaultPrayerLateReminderOffset` as 30 min, so users who already had
+    /// Islamic Mode enabled were left on the stale state even after we updated
+    /// the static defaults. Gated on a migration key so it runs at most once
+    /// per install and never overwrites later user tweaks.
+    private func runLateReminderDefaultsMigrationIfNeeded() {
+        let defaults = UserDefaults.standard
+        let migrationKey = "lateReminderDefaultsMigration_v2"
+        guard !defaults.bool(forKey: migrationKey) else { return }
+
+        defaults.set(true, forKey: "lateRemindersEnabled")
+        defaults.set(15, forKey: "lateReminderOffsetGlobal")
+        defaults.set(true, forKey: "lateReminderRespectDNDGlobal")
+        defaults.set(AppSettingsDefault.defaultOverlay2PerPrayer,
+                     forKey: AppSettingsKey.overlay2PerPrayer)
+        defaults.set(AppSettingsDefault.defaultPrayerLateReminderOffset,
+                     forKey: AppSettingsKey.prayerLateReminderOffset)
+        defaults.set(true, forKey: migrationKey)
+    }
+
     // MARK: - Persistence
 
     private func loadPerPrayerSettings() {
@@ -435,6 +1147,9 @@ struct IslamicSettingsView: View {
         overlay2PerPrayer = (defaults.dictionary(forKey: AppSettingsKey.overlay2PerPrayer) as? [String: Bool])
             ?? AppSettingsDefault.defaultOverlay2PerPrayer
         jamaatTimes = loadStoredJamaatTimes(defaults: defaults)
+
+        jamaatOverridePerPrayer = (defaults.dictionary(forKey: "jamaatOverridePerPrayer") as? [String: Bool])
+            ?? ["fajr": false, "dhuhr": false, "asr": false, "maghrib": false, "isha": false]
 
         if isFirstRun && jamaatTimesEnabled {
             overlay1PerPrayer = ["fajr": true, "dhuhr": true, "asr": true, "maghrib": true, "isha": true]
@@ -498,5 +1213,24 @@ struct IslamicSettingsView: View {
     private func cleanedCoordinateInput(_ value: String) -> String {
         value.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+}
 
+struct PulsatingDot: View {
+    @State private var pulse = false
+    
+    var body: some View {
+        Circle()
+            .fill(Color.green)
+            .frame(width: 8, height: 8)
+            .scaleEffect(pulse ? 1.4 : 1.0)
+            .opacity(pulse ? 0.4 : 1.0)
+            .onAppear {
+                withAnimation(
+                    .easeInOut(duration: 1.2)
+                    .repeatForever(autoreverses: true)
+                ) {
+                    pulse = true
+                }
+            }
+    }
 }

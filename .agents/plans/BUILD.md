@@ -78,7 +78,7 @@ After editing, run `xcodegen generate` and rebuild.
 
 ## Sparkle appcast
 
-- Feed URL: `https://itsrafsanjani.github.io/crest/appcast.xml` (set in Info.plist via `SUFeedURL`)
+- Feed URL: `https://saiftheboss7.github.io/crest/appcast.xml` (set in Info.plist via `SUFeedURL`)
 - Public EdDSA key: hardcoded in Info.plist via `SUPublicEDKey`
 - Update flow: see Sparkle docs → fetch via `ctx7` if you need API specifics.
 

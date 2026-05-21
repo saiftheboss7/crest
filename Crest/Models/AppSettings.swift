@@ -54,6 +54,23 @@ enum AppSettingsKey {
     static let staticLongitude = "staticLongitude"
     static let prayerOverlaySoundEnabled = "prayerOverlaySoundEnabled"
 
+    // Per-Prayer Detail Settings
+    static let prayerLateReminderOffset = "prayerLateReminderOffset"
+    static let prayerSoundName = "prayerSoundName"
+    static let prayerSoundVolume = "prayerSoundVolume"
+    static let prayerFullScreenEnabled = "prayerFullScreenEnabled"
+    static let prayerShowOnAllSpaces = "prayerShowOnAllSpaces"
+    static let prayerAutoDismissMinutes = "prayerAutoDismissMinutes"
+    static let prayerSnoozeOptions = "prayerSnoozeOptions"
+    static let prayerOverrideDND = "prayerOverrideDND"
+    static let prayerShowDuringMeetings = "prayerShowDuringMeetings"
+    static let prayerShowDuringScreenSharing = "prayerShowDuringScreenSharing"
+    static let prayerCustomMessage = "prayerCustomMessage"
+
+    // Location Mode Settings
+    static let locationModeManual = "locationModeManual"
+    static let selectedCityName = "selectedCityName"
+
     // Jamaat Times
     static let jamaatTimesEnabled = "jamaatTimesEnabled"
     static let jamaatTimes = "jamaatTimes"
@@ -101,8 +118,46 @@ enum AppSettingsDefault {
         "fajr": false, "dhuhr": false, "asr": false, "maghrib": false, "isha": false
     ]
     static let defaultOverlay2PerPrayer: [String: Bool] = [
+        "fajr": true, "dhuhr": true, "asr": true, "maghrib": true, "isha": true
+    ]
+
+    // Per-Prayer Detail Defaults
+    static let defaultPrayerLateReminderOffset: [String: Int] = [
+        "fajr": 15, "dhuhr": 15, "asr": 15, "maghrib": 15, "isha": 15
+    ]
+    static let defaultPrayerSoundName: [String: String] = [
+        "fajr": "Soft Chime", "dhuhr": "Soft Chime", "asr": "Soft Chime", "maghrib": "Soft Chime", "isha": "Soft Chime"
+    ]
+    static let defaultPrayerSoundVolume: [String: Double] = [
+        "fajr": 0.7, "dhuhr": 0.7, "asr": 0.7, "maghrib": 0.7, "isha": 0.7
+    ]
+    static let defaultPrayerFullScreenEnabled: [String: Bool] = [
+        "fajr": true, "dhuhr": true, "asr": true, "maghrib": true, "isha": true
+    ]
+    static let defaultPrayerShowOnAllSpaces: [String: Bool] = [
+        "fajr": true, "dhuhr": true, "asr": true, "maghrib": true, "isha": true
+    ]
+    static let defaultPrayerAutoDismissMinutes: [String: Int] = [
+        "fajr": 0, "dhuhr": 0, "asr": 0, "maghrib": 0, "isha": 0
+    ]
+    static let defaultPrayerSnoozeOptions: [String: [Int]] = [
+        "fajr": [5, 10, 15], "dhuhr": [5, 10, 15], "asr": [5, 10, 15], "maghrib": [5, 10, 15], "isha": [5, 10, 15]
+    ]
+    static let defaultPrayerOverrideDND: [String: Bool] = [
+        "fajr": true, "dhuhr": true, "asr": true, "maghrib": true, "isha": true
+    ]
+    static let defaultPrayerShowDuringMeetings: [String: Bool] = [
         "fajr": false, "dhuhr": false, "asr": false, "maghrib": false, "isha": false
     ]
+    static let defaultPrayerShowDuringScreenSharing: [String: Bool] = [
+        "fajr": false, "dhuhr": false, "asr": false, "maghrib": false, "isha": false
+    ]
+    static let defaultPrayerCustomMessage: [String: String] = [
+        "fajr": "", "dhuhr": "", "asr": "", "maghrib": "", "isha": ""
+    ]
+
+    static let locationModeManual = false
+    static let selectedCityName = "Dhaka, Bangladesh"
 
     // UI State
     static let settingsSelectedTab = 0

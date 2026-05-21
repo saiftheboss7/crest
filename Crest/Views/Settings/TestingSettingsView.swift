@@ -74,6 +74,7 @@ struct TestingSettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
     }
 
     @ViewBuilder
@@ -111,7 +112,7 @@ struct TestingSettingsView: View {
     }
 
     private func triggerPrayerSound() {
-        AlertSoundService.shared.playPrayerOverlayAlert()
+        AlertSoundService.shared.playPrayerOverlayAlert(for: .fajr)
         prayerSoundStatus = "Prayer overlay sound played."
     }
 

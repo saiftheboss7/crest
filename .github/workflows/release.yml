@@ -90,7 +90,7 @@ jobs:
       - name: Build appcast.xml
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
-          DMG_URL="https://github.com/itsrafsanjani/crest/releases/download/v${VERSION}/Crest-${VERSION}.dmg"
+          DMG_URL="https://github.com/saiftheboss7/crest/releases/download/v${VERSION}/Crest-${VERSION}.dmg"
           SIGN_OUTPUT="${{ steps.sign.outputs.SIGN_OUTPUT }}"
 
           ED_SIGNATURE=$(echo "${SIGN_OUTPUT}" | grep -o 'sparkle:edSignature="[^"]*"' | cut -d'"' -f2)
@@ -104,7 +104,7 @@ jobs:
           <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
             <channel>
               <title>Crest Updates</title>
-              <link>https://itsrafsanjani.github.io/crest/appcast.xml</link>
+              <link>https://saiftheboss7.github.io/crest/appcast.xml</link>
             </channel>
           </rss>
           EMPTY_EOF
@@ -126,7 +126,7 @@ jobs:
 
             Or install via Homebrew:
             ```bash
-            brew tap itsrafsanjani/crest
+            brew tap saiftheboss7/crest
             brew install --cask crest
             ```
 
@@ -146,7 +146,7 @@ jobs:
           git add appcast.xml
           git commit -m "Update appcast for v${{ steps.version.outputs.VERSION }}"
           git branch -M gh-pages
-          git push --force "https://x-access-token:${{ github.token }}@github.com/itsrafsanjani/crest.git" gh-pages
+          git push --force "https://x-access-token:${{ github.token }}@github.com/saiftheboss7/crest.git" gh-pages
 
       - name: Update Homebrew Cask
         env:
@@ -156,7 +156,7 @@ jobs:
           VERSION="${{ steps.version.outputs.VERSION }}"
           SHA=$(shasum -a 256 "Crest-${VERSION}.dmg" | awk '{print $1}')
 
-          git clone "https://x-access-token:${GH_TOKEN}@github.com/itsrafsanjani/homebrew-crest.git" /tmp/tap || exit 0
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/saiftheboss7/homebrew-crest.git" /tmp/tap || exit 0
           cd /tmp/tap
 
           sed -i '' "s/version \".*\"/version \"${VERSION}\"/" Casks/crest.rb

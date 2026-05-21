@@ -41,7 +41,7 @@ rm private_key.pem   # Delete after copying
 The Sparkle appcast is hosted on GitHub Pages at:
 
 ```
-https://itsrafsanjani.github.io/crest/appcast.xml
+https://saiftheboss7.github.io/crest/appcast.xml
 ```
 
 **Setup:** GitHub repo > Settings > Pages > Source: `gh-pages` branch, `/ (root)`
@@ -51,11 +51,11 @@ https://itsrafsanjani.github.io/crest/appcast.xml
 | Secret | Purpose |
 |---|---|
 | `SPARKLE_EDDSA_PRIVATE_KEY` | Signs DMG for Sparkle update verification |
-| `HOMEBREW_TAP_TOKEN` (optional) | PAT with `repo` scope for pushing to `itsrafsanjani/homebrew-crest` |
+| `HOMEBREW_TAP_TOKEN` (optional) | PAT with `repo` scope for pushing to `saiftheboss7/homebrew-crest` |
 
 ### 4. Homebrew Tap (Optional)
 
-Create the repo `itsrafsanjani/homebrew-crest` with a `Casks/crest.rb` file. The CI workflow updates it automatically if the `HOMEBREW_TAP_TOKEN` secret exists.
+Create the repo `saiftheboss7/homebrew-crest` with a `Casks/crest.rb` file. The CI workflow updates it automatically if the `HOMEBREW_TAP_TOKEN` secret exists.
 
 ## Creating a Release
 
@@ -80,12 +80,12 @@ git push origin main --tags
 
 The `Release` workflow (`.github/workflows/release.yml`) triggers automatically on the `v*` tag push.
 
-Monitor progress at: `https://github.com/itsrafsanjani/crest/actions`
+Monitor progress at: `https://github.com/saiftheboss7/crest/actions`
 
 ### 4. Verify the release
 
 - [ ] GitHub Release exists with DMG attached
-- [ ] Appcast is updated at `https://itsrafsanjani.github.io/crest/appcast.xml`
+- [ ] Appcast is updated at `https://saiftheboss7.github.io/crest/appcast.xml`
 - [ ] DMG installs correctly (drag to Applications, right-click > Open)
 - [ ] Existing app detects the update via Sparkle
 
@@ -118,7 +118,7 @@ The build number auto-increments with each CI run, ensuring Sparkle always sees 
 
 The appcast (`appcast.xml`) is a Sparkle RSS feed hosted on GitHub Pages. Each release adds a new `<item>` to the feed. The feed is cumulative — older versions are preserved so Sparkle can show release notes for skipped versions.
 
-**URL:** `https://itsrafsanjani.github.io/crest/appcast.xml`
+**URL:** `https://saiftheboss7.github.io/crest/appcast.xml`
 
 Each item contains:
 - Display version and build number
@@ -152,11 +152,11 @@ macOS GitHub runners cache Xcode versions. If the runner's Xcode version doesn't
 This is normal — it means `create-dmg` couldn't set a custom volume icon. The DMG is still valid. The `|| true` in the workflow handles this.
 
 ### Sparkle shows "No updates available" for a new release
-- Verify the appcast URL is accessible: `curl https://itsrafsanjani.github.io/crest/appcast.xml`
+- Verify the appcast URL is accessible: `curl https://saiftheboss7.github.io/crest/appcast.xml`
 - Check that `sparkle:version` (build number) in the appcast is greater than the installed app's build number
 - Ensure `SUPublicEDKey` in the app matches the key used to sign the DMG
 
 ### Homebrew Cask update step fails
 - Ensure the `HOMEBREW_TAP_TOKEN` secret has `repo` scope
-- Verify the `itsrafsanjani/homebrew-crest` repo exists with `Casks/crest.rb`
+- Verify the `saiftheboss7/homebrew-crest` repo exists with `Casks/crest.rb`
 - This step is non-blocking — the GitHub Release is created regardless

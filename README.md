@@ -2,9 +2,6 @@
 
 A native macOS menu bar app for calendar events, meetings, and schedule awareness. Optional Islamic Mode adds prayer times, Hijri date, and prayer reminders.
 
-<img width="694" height="1272" alt="CleanShot 2026-05-21 at 19 22 32@2x" src="https://github.com/user-attachments/assets/381082c3-092f-459b-9dd0-5e302fa5b092" />
-
-
 **Requires macOS 14.0 (Sonoma) or later.**
 
 ## Features
@@ -40,7 +37,7 @@ A native macOS menu bar app for calendar events, meetings, and schedule awarenes
 
 ### Download (Recommended)
 
-1. Download the latest `.dmg` from [GitHub Releases](https://github.com/itsrafsanjani/crest/releases/latest)
+1. Download the latest `.dmg` from [GitHub Releases](https://github.com/saiftheboss7/crest/releases/latest)
 2. Open the DMG and drag **Crest** to **Applications**
 3. On first launch, right-click Crest.app > **Open** > click **Open** (required once for unsigned apps)
 
@@ -58,7 +55,7 @@ or
 ### Homebrew
 
 ```bash
-brew tap itsrafsanjani/crest
+brew tap saiftheboss7/crest
 brew install --cask crest
 ```
 
@@ -69,7 +66,7 @@ brew install --cask crest
 brew install xcodegen
 
 # Clone and build
-git clone https://github.com/itsrafsanjani/crest.git
+git clone https://github.com/saiftheboss7/crest.git
 cd crest
 xcodegen generate
 xcodebuild -project Crest.xcodeproj -scheme Crest -configuration Release build \

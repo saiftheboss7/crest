@@ -41,6 +41,7 @@ struct CalendarSettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
         .onAppear(perform: loadCalendars)
         .onChange(of: enabledIDs) { _, newValue in
             let array = Array(newValue)

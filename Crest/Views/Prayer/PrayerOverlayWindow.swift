@@ -39,6 +39,46 @@ final class PrayerOverlayWindow: NSPanel {
         let hostingView = NSHostingView(rootView: overlayView)
         hostingView.frame = frame
         self.contentView = hostingView
+
+        setupObservers()
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+        NSWorkspace.shared.notificationCenter.removeObserver(self)
+    }
+
+    private func setupObservers() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleScreenParametersChanged),
+            name: NSApplication.didChangeScreenParametersNotification,
+            object: nil
+        )
+
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(handleSystemWake),
+            name: NSWorkspace.didWakeNotification,
+            object: nil
+        )
+    }
+
+    @objc private func handleScreenParametersChanged() {
+        updateFrameToMainScreen()
+    }
+
+    @objc private func handleSystemWake() {
+        updateFrameToMainScreen()
+    }
+
+    private func updateFrameToMainScreen() {
+        let screen = NSScreen.main ?? NSScreen.screens[0]
+        let frame = screen.frame
+        self.setFrame(frame, display: true, animate: false)
+        if let contentView = self.contentView {
+            contentView.frame = CGRect(origin: .zero, size: frame.size)
+        }
     }
 
     func showFullscreen() {
@@ -47,8 +87,11 @@ final class PrayerOverlayWindow: NSPanel {
     }
 
     override func keyDown(with event: NSEvent) {
-        // Esc is blocked — user must type "inshallah" or snooze
-        if event.keyCode == 53 { return }
+        // Don't swallow keys here — the SwiftUI `.keyboardShortcut` declarations
+        // on the buttons (1 → snooze 15m, 3 → snooze 30m, Esc → dismiss,
+        // Return → Mark as Prayed) need them propagated to the responder
+        // chain. The original "Esc is blocked, type inshallah" gate didn't
+        // match the visible button labels.
         super.keyDown(with: event)
     }
 

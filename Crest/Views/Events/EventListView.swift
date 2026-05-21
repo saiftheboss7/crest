@@ -107,6 +107,7 @@ struct EventListView: View {
                 }
             }
         }
+        .scrollIndicators(.hidden)
     }
 
     private var groupedEvents: [EventGroup] {

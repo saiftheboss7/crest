@@ -40,11 +40,12 @@ targets:
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSUIElement: true
-        SUFeedURL: "https://itsrafsanjani.github.io/crest/appcast.xml"
+        SUFeedURL: "https://saiftheboss7.github.io/crest/appcast.xml"
         SUPublicEDKey: "XwuY5nOkreRnwPKtbx3hdKDT7HvSH0JqxU/nyRNrk8o="
         NSCalendarsFullAccessUsageDescription: "Crest needs access to your calendars to show upcoming events and meeting links."
         NSCalendarsUsageDescription: "Crest needs access to your calendars to show upcoming events and meeting links."
         NSLocationUsageDescription: "Crest needs your location to calculate accurate prayer times."
+        NSLocationWhenInUseUsageDescription: "Crest needs your location to calculate accurate prayer times."
     entitlements:
       path: Crest/Crest.entitlements
     settings:
@@ -57,6 +58,26 @@ targets:
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "-"
         COMBINE_HIDPI_IMAGES: YES
+      configs:
+        Release:
+          # Universal binary (arm64 + x86_64) for the released DMG, so the
+          # same artifact runs natively on every supported Mac.
+          ONLY_ACTIVE_ARCH: NO
+          # Required for any future Apple notarisation; harmless with ad-hoc
+          # signing because Sparkle's EdDSA signature is what verifies updates.
+          ENABLE_HARDENED_RUNTIME: YES
+          # Strip private + Swift symbols from the released binary to shrink
+          # the DMG and avoid leaking implementation details.
+          STRIP_INSTALLED_PRODUCT: YES
+          STRIP_SWIFT_SYMBOLS: YES
+          DEAD_CODE_STRIPPING: YES
+          DEPLOYMENT_POSTPROCESSING: YES
+          SWIFT_OPTIMIZATION_LEVEL: -O
+          SWIFT_COMPILATION_MODE: wholemodule
+          GCC_OPTIMIZATION_LEVEL: s
+        Debug:
+          ONLY_ACTIVE_ARCH: YES
+          SWIFT_OPTIMIZATION_LEVEL: -Onone
 
   CrestTests:
     type: bundle.unit-test

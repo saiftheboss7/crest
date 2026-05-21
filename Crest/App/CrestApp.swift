@@ -23,7 +23,11 @@ struct CrestApp: App {
                 prayerTimeService: prayerService
             )
         } label: {
-            Image(nsImage: Self.menuBarIcon)
+            MenuBarLabel(
+                clock: clock,
+                calendarService: calendarService,
+                prayerTimeService: prayerService
+            )
         }
         .menuBarExtraStyle(.window)
 

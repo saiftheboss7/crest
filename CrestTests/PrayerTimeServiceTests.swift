@@ -165,12 +165,12 @@ final class PrayerTimeServiceTests: XCTestCase {
         let service = PrayerTimeService(locationService: LocationService())
         service.recompute()
 
-        // fajr → sunrise → dhuhr → asr → maghrib → isha (end = islamicMidnight)
+        // fajr → sunrise → dhuhr → asr → maghrib → isha (end = tomorrowFajrTime)
         XCTAssertEqual(service.prayerEndTime(.fajr), service.timeForPrayer(.sunrise))
         XCTAssertEqual(service.prayerEndTime(.sunrise), service.timeForPrayer(.dhuhr))
         XCTAssertEqual(service.prayerEndTime(.dhuhr), service.timeForPrayer(.asr))
         XCTAssertEqual(service.prayerEndTime(.asr), service.timeForPrayer(.maghrib))
         XCTAssertEqual(service.prayerEndTime(.maghrib), service.timeForPrayer(.isha))
-        XCTAssertEqual(service.prayerEndTime(.isha), service.islamicMidnight)
+        XCTAssertEqual(service.prayerEndTime(.isha), service.tomorrowFajrTime())
     }
 }
