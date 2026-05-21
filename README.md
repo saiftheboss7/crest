@@ -8,7 +8,8 @@ A native macOS menu bar app for calendar events, meetings, and schedule awarenes
 
 Keep forgetting meetings when there was a tiny notification triggered 30m before somewhere? Crest is designed to make your event alerts look good, taking the full real estate of your Retina screen with beautiful typography, accessibility friendly design. You probably won’t be able to miss them. Crest also has an optional Islamic Reminder app section to remind you about the daily prayers.
 
-<img width="650" height="1270" alt="CleanShot 2026-05-22 at 04 34 49@2x" src="https://github.com/user-attachments/assets/e58395f4-1d7a-4aef-88f4-f9a23fcf05d2" />
+<img width="660" height="1274" alt="CleanShot 2026-05-22 at 04 36 18@2x" src="https://github.com/user-attachments/assets/55d531aa-f914-4e2e-b80d-a5a851c0e9b4" />
+
 <img width="5118" height="2880" alt="CleanShot 2026-05-22 at 03 38 57@2x" src="https://github.com/user-attachments/assets/08210bb8-d6d7-4abb-9997-ab1bddb99f32" />
 <img width="5118" height="2872" alt="CleanShot 2026-05-22 at 03 39 14@2x" src="https://github.com/user-attachments/assets/84c606de-4495-4135-af20-e625ee17b996" />
 
