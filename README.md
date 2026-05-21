@@ -2,6 +2,9 @@
 
 A native macOS menu bar app for calendar events, meetings, and schedule awareness. Optional Islamic Mode adds prayer times, Hijri date, and prayer reminders.
 
+<img width="694" height="1272" alt="CleanShot 2026-05-21 at 19 22 32@2x" src="https://github.com/user-attachments/assets/381082c3-092f-459b-9dd0-5e302fa5b092" />
+
+
 **Requires macOS 14.0 (Sonoma) or later.**
 
 ## Features
