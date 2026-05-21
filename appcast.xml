@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Crest Updates</title>
+    <link>https://itsrafsanjani.github.io/crest/appcast.xml</link>
+        <item>
+        <title>Version 0.0.1</title>
+        <sparkle:version>5</sparkle:version>
+        <sparkle:shortVersionString>0.0.1</sparkle:shortVersionString>
+        <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+        <pubDate>Wed, 08 Apr 2026 15:25:05 +0000</pubDate>
+        <enclosure url="https://github.com/itsrafsanjani/crest/releases/download/v0.0.1/Crest-0.0.1.dmg" type="application/octet-stream" sparkle:edSignature="" length="1351320"/>
+      </item>
+          <item>
+        <title>Version 0.0.1</title>
+        <sparkle:version>6</sparkle:version>
+        <sparkle:shortVersionString>0.0.1</sparkle:shortVersionString>
+        <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+        <pubDate>Wed, 08 Apr 2026 15:32:09 +0000</pubDate>
+        <enclosure url="https://github.com/itsrafsanjani/crest/releases/download/v0.0.1/Crest-0.0.1.dmg" type="application/octet-stream" sparkle:edSignature="" length="1351295"/>
+      </item>
+          <item>
+        <title>Version 0.0.1</title>
+        <sparkle:version>9</sparkle:version>
+        <sparkle:shortVersionString>0.0.1</sparkle:shortVersionString>
+        <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+        <pubDate>Wed, 08 Apr 2026 16:01:27 +0000</pubDate>
+        <enclosure url="https://github.com/itsrafsanjani/crest/releases/download/v0.0.1/Crest-0.0.1.dmg" type="application/octet-stream" sparkle:edSignature="" length="1351294"/>
+      </item>
+          <item>
+        <title>Version 0.0.1</title>
+        <sparkle:version>10</sparkle:version>
+        <sparkle:shortVersionString>0.0.1</sparkle:shortVersionString>
+        <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+        <pubDate>Wed, 08 Apr 2026 17:22:27 +0000</pubDate>
+        <enclosure url="https://github.com/itsrafsanjani/crest/releases/download/v0.0.1/Crest-0.0.1.dmg" type="application/octet-stream" sparkle:edSignature="" length="1351317"/>
+      </item>
+          <item>
+        <title>Version 0.0.2</title>
+        <sparkle:version>11</sparkle:version>
+        <sparkle:shortVersionString>0.0.2</sparkle:shortVersionString>
+        <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+        <pubDate>Wed, 22 Apr 2026 09:31:01 +0000</pubDate>
+        <enclosure url="https://github.com/itsrafsanjani/crest/releases/download/v0.0.2/Crest-0.0.2.dmg" type="application/octet-stream" sparkle:edSignature="" length="1401198"/>
+      </item>
+          <item>
+        <title>Version 0.0.3</title>
+        <sparkle:version>12</sparkle:version>
+        <sparkle:shortVersionString>0.0.3</sparkle:shortVersionString>
+        <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+        <pubDate>Wed, 22 Apr 2026 16:52:31 +0000</pubDate>
+        <enclosure url="https://github.com/itsrafsanjani/crest/releases/download/v0.0.3/Crest-0.0.3.dmg" type="application/octet-stream" sparkle:edSignature="" length="1679321"/>
+      </item>
+          <item>
+        <title>Version 0.0.4</title>
+        <sparkle:version>13</sparkle:version>
+        <sparkle:shortVersionString>0.0.4</sparkle:shortVersionString>
+        <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+        <pubDate>Fri, 24 Apr 2026 16:32:26 +0000</pubDate>
+        <enclosure url="https://github.com/itsrafsanjani/crest/releases/download/v0.0.4/Crest-0.0.4.dmg" type="application/octet-stream" sparkle:edSignature="" length="1680062"/>
+      </item>
+          <item>
+        <title>Version 0.0.5</title>
+        <sparkle:version>14</sparkle:version>
+        <sparkle:shortVersionString>0.0.5</sparkle:shortVersionString>
+        <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+        <pubDate>Thu, 07 May 2026 17:29:31 +0000</pubDate>
+        <enclosure url="https://github.com/itsrafsanjani/crest/releases/download/v0.0.5/Crest-0.0.5.dmg" type="application/octet-stream" sparkle:edSignature="" length="2294766"/>
+      </item>
+          <item>
+        <title>Version 0.0.6</title>
+        <sparkle:version>16</sparkle:version>
+        <sparkle:shortVersionString>0.0.6</sparkle:shortVersionString>
+        <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+        <pubDate>Thu, 21 May 2026 22:24:06 +0000</pubDate>
+        <enclosure url="https://github.com/saiftheboss7/crest/releases/download/v0.0.6/Crest-0.0.6.dmg" type="application/octet-stream" sparkle:edSignature="" length="2319324"/>
+      </item>
+    </channel>
+</rss>
