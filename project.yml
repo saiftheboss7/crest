@@ -41,7 +41,7 @@ targets:
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSUIElement: true
         SUFeedURL: "https://saiftheboss7.github.io/crest/appcast.xml"
-        SUPublicEDKey: "XwuY5nOkreRnwPKtbx3hdKDT7HvSH0JqxU/nyRNrk8o="
+        SUPublicEDKey: "dmLpeNDITjP64vebENwUM/smrAPaX3Da3xYfNQ9fSu8="
         NSCalendarsFullAccessUsageDescription: "Crest needs access to your calendars to show upcoming events and meeting links."
         NSCalendarsUsageDescription: "Crest needs access to your calendars to show upcoming events and meeting links."
         NSLocationUsageDescription: "Crest needs your location to calculate accurate prayer times."
