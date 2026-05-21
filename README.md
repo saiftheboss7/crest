@@ -138,7 +138,7 @@ Crest was created and is primarily authored by **[Rafsan Jani (@itsrafsanjani)](
 
 Want to be listed here? See the next section.
 
-## Continuous good, an open invitation
+## ♻️ Perpetual Charity/Sadaqah Jariyah | An open invitation to contribute
 
 Crest is built as an act of continuous good: work whose impact compounds because it keeps helping people without further effort from the original giver. The same idea exists in many traditions under different names. The Jewish call it *tikkun olam* (repairing the world). Buddhists speak of earning *merit* through generosity. Secular thinkers call it "pay it forward".
 
