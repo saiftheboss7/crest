@@ -4,8 +4,12 @@ A native macOS menu bar app for calendar events, meetings, and schedule awarenes
 
 **Requires macOS 14.0 (Sonoma) or later.**
 
-## Features
+## Screenshots
+<img width="660" height="1274" alt="CleanShot 2026-05-22 at 04 36 18@2x" src="https://github.com/user-attachments/assets/55d531aa-f914-4e2e-b80d-a5a851c0e9b4" />
+<img width="5118" height="2880" alt="CleanShot 2026-05-22 at 03 38 57@2x" src="https://github.com/user-attachments/assets/08210bb8-d6d7-4abb-9997-ab1bddb99f32" />
+<img width="5118" height="2872" alt="CleanShot 2026-05-22 at 03 39 14@2x" src="https://github.com/user-attachments/assets/84c606de-4495-4135-af20-e625ee17b996" />
 
+## Features
 ### Calendar & Events
 - View upcoming events from all macOS system calendars (including synced Google Calendar)
 - Interactive mini calendar in the popover
