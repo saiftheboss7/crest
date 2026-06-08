@@ -137,8 +137,8 @@ Crest was created and is primarily authored by **[Rafsan Jani (@itsrafsanjani)](
 
 ### Contributors
 
-- [@itsrafsanjani](https://github.com/itsrafsanjani), original author and maintainer
-- [@saiftheboss7](https://github.com/saiftheboss7), UX improvements (Liquid Glass popover, overlay redesign, location-service hardening, late-reminder migration, hover affordances)
+- [@itsrafsanjani](https://github.com/itsrafsanjani), Original author who started the project
+- [@saiftheboss7](https://github.com/saiftheboss7), Current Maintainer, regularly adding UX improvements, new features (Liquid Glass popover, overlay redesign, location-service hardening, late-reminder migration, hover affordances)
 
 Want to be listed here? See the next section.
 
