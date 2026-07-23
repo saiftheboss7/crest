@@ -126,7 +126,7 @@ jobs:
           EMPTY_EOF
 
           # Build the complete appcast by inserting new item before </channel>
-          sed "s|</channel>|      <item>\n        <title>Version ${VERSION}</title>\n        <sparkle:version>${{ github.run_number }}</sparkle:version>\n        <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>\n        <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>\n        <pubDate>${PUB_DATE}</pubDate>\n        <enclosure url=\"${DMG_URL}\" type=\"application/octet-stream\" sparkle:edSignature=\"${ED_SIGNATURE}\" length=\"${DMG_LENGTH}\"/>\n      </item>\n    </channel>|" existing_appcast.xml > appcast.xml
+          sed "s|</channel>|      <item>\n        <title>Version ${VERSION}</title>\n        <sparkle:version>${{ github.run_number }}</sparkle:version>\n        <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>\n        <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>\n        <pubDate>${PUB_DATE}</pubDate>\n        <enclosure url=\"${DMG_URL}\" type=\"application/octet-stream\" sparkle:edSignature=\"${ED_SIGNATURE}\" length=\"${DMG_LENGTH}\"/>\n      </item>\n    </channel>|" existing_appcast.xml > appcast.xml
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
