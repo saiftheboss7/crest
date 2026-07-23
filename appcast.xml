@@ -81,7 +81,7 @@
         <sparkle:shortVersionString>0.0.7</sparkle:shortVersionString>
         <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
         <pubDate>Thu, 23 Jul 2026 22:43:11 +0000</pubDate>
-        <enclosure url="https://github.com/saiftheboss7/crest/releases/download/v0.0.7/Crest-0.0.7.dmg" type="application/octet-stream" sparkle:edSignature="" length="2329076"/>
+        <enclosure url="https://github.com/saiftheboss7/crest/releases/download/v0.0.7/Crest-0.0.7.dmg" type="application/octet-stream" sparkle:edSignature="D6PmVM9TTc2WsdZIJJm8LIthea/XyYqmdsbVjbtqzCxtrN2qMTW4gTBRZqOyQK2vthj4EIRwMFFJYI1myUz1Aw==" length="2329076"/>
       </item>
     </channel>
 </rss>
