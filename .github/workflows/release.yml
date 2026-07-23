@@ -87,7 +87,18 @@ jobs:
           SIGN_OUTPUT=$(./sparkle_tools/bin/sign_update "${DMG_FILE}" -f "$KEY_FILE")
           rm -f "$KEY_FILE"
 
-          echo "SIGN_OUTPUT=${SIGN_OUTPUT}" >> "$GITHUB_OUTPUT"
+          # Extract the raw base64 signature HERE, in the same shell that has
+          # the real sign_update output. Passing the full quoted output through
+          # a step output and re-inlining it drops the inner double quotes, so
+          # the downstream grep for edSignature="..." matched nothing and every
+          # appcast item shipped with an empty signature (Sparkle then rejected
+          # every update).
+          ED_SIGNATURE=$(echo "${SIGN_OUTPUT}" | grep -o 'sparkle:edSignature="[^"]*"' | cut -d'"' -f2)
+          if [ -z "${ED_SIGNATURE}" ]; then
+            echo "sign_update produced no edSignature; refusing to publish an unsigned update" >&2
+            exit 1
+          fi
+          echo "ED_SIGNATURE=${ED_SIGNATURE}" >> "$GITHUB_OUTPUT"
 
           DMG_SIZE=$(stat -f%z "${DMG_FILE}")
           echo "DMG_SIZE=${DMG_SIZE}" >> "$GITHUB_OUTPUT"
@@ -96,9 +107,9 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
           DMG_URL="https://github.com/saiftheboss7/crest/releases/download/v${VERSION}/Crest-${VERSION}.dmg"
-          SIGN_OUTPUT="${{ steps.sign.outputs.SIGN_OUTPUT }}"
 
-          ED_SIGNATURE=$(echo "${SIGN_OUTPUT}" | grep -o 'sparkle:edSignature="[^"]*"' | cut -d'"' -f2)
+          # Raw base64, extracted in the sign step (quote-safe to inline).
+          ED_SIGNATURE="${{ steps.sign.outputs.ED_SIGNATURE }}"
           DMG_LENGTH="${{ steps.sign.outputs.DMG_SIZE }}"
           PUB_DATE=$(date -R)
 
