@@ -5,6 +5,10 @@ struct PrayerOverlayView: View {
     let prayer: Prayer
     let prayerTime: Date
     let prayerEndTime: Date?
+    /// True when this overlay fired for a jamaat time rather than the waqt
+    /// start; the jamaat overlay keeps the classic gold accent so the two
+    /// reminders are visually distinct.
+    let isJamaat: Bool
     let onDismiss: () -> Void
     let onSnooze: (Int) -> Void
 
@@ -13,10 +17,11 @@ struct PrayerOverlayView: View {
     @State private var timer: Timer?
     @State private var elapsedSeconds: Int = 0
 
-    init(prayer: Prayer, prayerTime: Date, prayerEndTime: Date?, onDismiss: @escaping () -> Void, onSnooze: @escaping (Int) -> Void) {
+    init(prayer: Prayer, prayerTime: Date, prayerEndTime: Date?, isJamaat: Bool, onDismiss: @escaping () -> Void, onSnooze: @escaping (Int) -> Void) {
         self.prayer = prayer
         self.prayerTime = prayerTime
         self.prayerEndTime = prayerEndTime
+        self.isJamaat = isJamaat
         self.onDismiss = onDismiss
         self.onSnooze = onSnooze
         let remaining = Int(max(0, prayerTime.timeIntervalSince(Date())))
@@ -43,10 +48,20 @@ struct PrayerOverlayView: View {
         }
     }
 
-    /// Brighter gold than the previous #c4973b. Lifts the title's contrast to ~10.6:1
-    /// against the dark canvas and clears 7:1 even at the centre of the radial glow.
+    /// Deep accent for the radial glow and the icon/pill fills and strokes:
+    /// Tailwind Teal 700 for the waqt start reminder, classic gold for jamaat.
     private var themeColor: Color {
-        Color(red: 228/255, green: 183/255, blue: 91/255) // #E4B75B
+        isJamaat
+            ? Color(red: 228/255, green: 183/255, blue: 91/255) // gold #E4B75B
+            : Color(red: 15/255, green: 118/255, blue: 110/255) // Tailwind teal-700
+    }
+
+    /// Text accent. Gold already carries ~10.6:1 on the dark canvas; teal
+    /// needs the lighter Tailwind Teal 400 (#2DD4BF) for the same punch.
+    private var accentTextColor: Color {
+        isJamaat
+            ? Color(red: 228/255, green: 183/255, blue: 91/255) // gold #E4B75B
+            : Color(red: 45/255, green: 212/255, blue: 191/255) // Tailwind teal-400
     }
 
     private var autoDismissMinutes: Int {
@@ -124,23 +139,18 @@ struct PrayerOverlayView: View {
         // the screen edges; on a 5K external it reaches further still.
         GeometryReader { geo in
             let diagonal = sqrt(geo.size.width * geo.size.width + geo.size.height * geo.size.height)
-            let core = max(120, min(geo.size.width * 0.08, 260))
-            let edge = max(1000, min(diagonal * 0.65, 2600))
+            let core = isJamaat
+                ? max(120, min(geo.size.width * 0.08, 260))
+                : max(160, min(geo.size.width * 0.12, 360))
+            let edge = isJamaat
+                ? max(1000, min(diagonal * 0.65, 2600))
+                : max(1200, min(diagonal * 0.85, 3400))
 
             ZStack {
                 Color(red: 0.04, green: 0.04, blue: 0.06) // #0a0a0c
 
-                // Glow peak kept at 0.08 (so accent-coloured text in the centre
-                // still clears WCAG AAA 7:1). Stops pushed further from centre so
-                // the warmth reaches toward the corners of the canvas.
                 RadialGradient(
-                    stops: [
-                        .init(color: themeColor.opacity(0.08), location: 0.0),
-                        .init(color: themeColor.opacity(0.06), location: 0.25),
-                        .init(color: themeColor.opacity(0.03), location: 0.55),
-                        .init(color: themeColor.opacity(0.01), location: 0.85),
-                        .init(color: .clear, location: 1.0)
-                    ],
+                    stops: glowStops,
                     center: .center,
                     startRadius: core,
                     endRadius: edge
@@ -149,6 +159,28 @@ struct PrayerOverlayView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .drawingGroup()
         }
+    }
+
+    /// Jamaat keeps the previous subtle gold wash (peak 0.08, tuned for
+    /// gold's brightness); the waqt start reminder uses the more prominent
+    /// teal glow that reaches the screen corners.
+    private var glowStops: [Gradient.Stop] {
+        if isJamaat {
+            return [
+                .init(color: themeColor.opacity(0.08), location: 0.0),
+                .init(color: themeColor.opacity(0.06), location: 0.25),
+                .init(color: themeColor.opacity(0.03), location: 0.55),
+                .init(color: themeColor.opacity(0.01), location: 0.85),
+                .init(color: .clear, location: 1.0)
+            ]
+        }
+        return [
+            .init(color: themeColor.opacity(0.20), location: 0.0),
+            .init(color: themeColor.opacity(0.15), location: 0.30),
+            .init(color: themeColor.opacity(0.08), location: 0.62),
+            .init(color: themeColor.opacity(0.03), location: 0.90),
+            .init(color: .clear, location: 1.0)
+        ]
     }
 
     private var mainContent: some View {
@@ -171,7 +203,7 @@ struct PrayerOverlayView: View {
                 // so the icon still feels grounded against the dimmer glow.
                 Text(prayer.emoji)
                     .font(.system(size: emojiSize))
-                    .foregroundColor(prayer == .fajr ? Color(red: 94/255, green: 124/255, blue: 226/255) : themeColor)
+                    .foregroundColor(prayer == .fajr ? Color(red: 94/255, green: 124/255, blue: 226/255) : accentTextColor)
                     .frame(width: circleSize, height: circleSize)
                     .background(
                         Circle()
@@ -183,10 +215,11 @@ struct PrayerOverlayView: View {
                     )
                     .padding(.bottom, 44)
 
-                // Prayer Name — bigger, lighter weight for a more elegant feel.
-                Text(prayer.displayName)
+                // Title: "Time for <prayer> 🤲". lineLimit + minimumScaleFactor
+                // keep the longer copy on one line on smaller displays.
+                Text("Time for \(prayer.displayName) 🤲")
                     .font(.system(size: titleSize, weight: .semibold))
-                    .foregroundColor(themeColor)
+                    .foregroundColor(accentTextColor)
                     .tracking(-1.2)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
@@ -215,7 +248,7 @@ struct PrayerOverlayView: View {
                         Text(waqtText)
                             .font(.system(size: pillTextSize, weight: .semibold))
                     }
-                    .foregroundStyle(themeColor)
+                    .foregroundStyle(accentTextColor)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
                     .background(

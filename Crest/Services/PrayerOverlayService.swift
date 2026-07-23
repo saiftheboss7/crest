@@ -2,22 +2,48 @@ import Foundation
 import Observation
 import AppKit
 
+extension Notification.Name {
+    /// Posted after a prayer overlay window (start or ending) closes without
+    /// being replaced. Overlays from the two services stack when the user
+    /// leaves one open (most recently fired on top); this lets the sibling
+    /// service restore key status to its still-visible window underneath so
+    /// its keyboard shortcuts keep working.
+    static let prayerOverlayWindowDidClose = Notification.Name("prayerOverlayWindowDidClose")
+}
+
 @MainActor @Observable
 final class PrayerOverlayService {
     private let prayerTimeService: PrayerTimeService
+    /// Timers armed from the daily schedule; rebuilt on every refresh pass.
     private var scheduledTimers: [String: Timer] = [:]
+    /// User-initiated snooze timers, kept separate from `scheduledTimers` so
+    /// the periodic schedule rebuild cannot invalidate a pending snooze.
+    private var snoozeTimers: [String: Timer] = [:]
     private var dismissedPrayers: Set<String> = []
+    /// Prayers whose reminder already showed for the current waqt, so the
+    /// catch-up path in `scheduleOverlays` does not re-fire them every minute.
+    private var firedPrayers: Set<String> = []
     private var refreshTimer: Timer?
     private(set) var overlayWindow: PrayerOverlayWindow?
     private(set) var activePrayer: Prayer?
-
-    private let warningMinutes: TimeInterval = 15
-    private let wakeGraceMinutes: TimeInterval = 15
+    /// True while the visible overlay came from the Testing tab; dismissing a
+    /// test overlay must not mark the real reminder as dismissed for the day.
+    private var activeOverlayIsTest = false
 
     init(prayerTimeService: PrayerTimeService) {
         self.prayerTimeService = prayerTimeService
         startPeriodicRefresh()
         scheduleOverlays()
+
+        NotificationCenter.default.addObserver(
+            forName: .prayerOverlayWindowDidClose,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.restoreKeyWindowIfVisible()
+            }
+        }
     }
 
     func scheduleOverlays() {
@@ -33,31 +59,48 @@ final class PrayerOverlayService {
 
         for prayerTime in prayerTimeService.todayPrayers {
             let prayer = prayerTime.prayer
-            guard prayer != .sunrise else { continue }
-            guard perPrayer[prayer.rawValue] ?? true else { continue }
-            guard !dismissedPrayers.contains(prayer.rawValue) else { continue }
+            let action = PrayerOverlayScheduling.startReminderAction(
+                prayer: prayer,
+                prayerStart: prayerTime.time,
+                jamaatTime: resolvedJamaatTime(for: prayerTime),
+                isEnabled: perPrayer[prayer.rawValue] ?? true,
+                isDismissed: dismissedPrayers.contains(prayer.rawValue),
+                hasAlreadyFired: firedPrayers.contains(prayer.rawValue),
+                now: now
+            )
 
-            let fireTime = overlayFireTime(for: prayerTime)
-            guard fireTime > now else { continue }
+            switch action {
+            case .skip:
+                continue
 
-            let delay = fireTime.timeIntervalSince(now)
-            let timer = Timer.scheduledTimer(withTimeInterval: max(delay, 0.1), repeats: false) { [weak self] _ in
-                Task { @MainActor in
-                    self?.fireOverlay(for: prayer, triggerTime: fireTime)
+            case .fireNow:
+                // Fire time already passed but is still within the grace
+                // window: app launched mid-window, woke from sleep, or the
+                // timer was lost to a reschedule race.
+                fireOverlay(for: prayer)
+
+            case .schedule(let fireTime):
+                let delay = max(fireTime.timeIntervalSince(now), 0.1)
+                let timer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
+                    Task { @MainActor in
+                        self?.fireOverlay(for: prayer)
+                    }
                 }
+                RunLoop.main.add(timer, forMode: .common)
+                scheduledTimers[prayer.rawValue] = timer
             }
-            RunLoop.main.add(timer, forMode: .common)
-            scheduledTimers[prayer.rawValue] = timer
         }
     }
 
     func dismissOverlay() {
-        if let prayer = activePrayer {
+        if let prayer = activePrayer, !activeOverlayIsTest {
             dismissedPrayers.insert(prayer.rawValue)
         }
         overlayWindow?.close()
         overlayWindow = nil
         activePrayer = nil
+        activeOverlayIsTest = false
+        NotificationCenter.default.post(name: .prayerOverlayWindowDidClose, object: nil)
     }
 
     func snoozeOverlay(minutes: Int) {
@@ -65,42 +108,24 @@ final class PrayerOverlayService {
         overlayWindow?.close()
         overlayWindow = nil
         activePrayer = nil
+        activeOverlayIsTest = false
+        NotificationCenter.default.post(name: .prayerOverlayWindowDidClose, object: nil)
 
+        snoozeTimers[prayer.rawValue]?.invalidate()
         let snoozeTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(minutes * 60), repeats: false) { [weak self] _ in
             Task { @MainActor in
-                guard let self else { return }
-                self.fireOverlay(for: prayer, triggerTime: Date())
+                self?.fireOverlay(for: prayer)
             }
         }
         RunLoop.main.add(snoozeTimer, forMode: .common)
-        scheduledTimers["\(prayer.rawValue)-snooze"] = snoozeTimer
+        snoozeTimers[prayer.rawValue] = snoozeTimer
     }
 
-    /// Called by SleepWakeService on wake — fires any missed overlays still within the valid window.
+    /// Called by SleepWakeService on wake. A fresh scheduling pass re-arms
+    /// future timers (run-loop timers drift across sleep) and its catch-up
+    /// path fires any reminder whose fire time passed during sleep while the
+    /// reminder window is still open.
     func handleWake() {
-        guard prayerTimeService.isEnabled else { return }
-
-        let perPrayer = (UserDefaults.standard.dictionary(forKey: AppSettingsKey.overlay1PerPrayer) as? [String: Bool])
-            ?? AppSettingsDefault.defaultOverlay1PerPrayer
-
-        let now = Date()
-        let wakeGraceInterval = wakeGraceMinutes * 60
-
-        for prayerTime in prayerTimeService.todayPrayers {
-            let prayer = prayerTime.prayer
-            guard prayer != .sunrise else { continue }
-            guard perPrayer[prayer.rawValue] ?? true else { continue }
-            guard !dismissedPrayers.contains(prayer.rawValue) else { continue }
-
-            let fireTime = overlayFireTime(for: prayerTime)
-            let validUntil = overlayWakeValidUntil(for: prayerTime, fireTime: fireTime)
-
-            if fireTime <= now && validUntil > now && now.timeIntervalSince(fireTime) <= wakeGraceInterval {
-                fireOverlay(for: prayer, triggerTime: fireTime)
-                return
-            }
-        }
-
         scheduleOverlays()
     }
 
@@ -117,31 +142,44 @@ final class PrayerOverlayService {
         }
         guard let prayer = targetPrayer else { return false }
 
-        // Bypass the production gates in `fireOverlay` (Isha→Fajr dedup, DND,
-        // dismissed-set) — the test button exists to verify the overlay UI
-        // renders, so it should always show.
-        dismissedPrayers.remove(prayer.rawValue)
-        showOverlayWindow(prayer: prayer, prayerTime: Date())
+        // Bypass the production gates in `fireOverlay` (DND, dismissed set);
+        // the test button exists to verify the overlay UI renders, so it
+        // should always show. `isTest: true` keeps dismissing a test overlay
+        // from suppressing the real reminder later today.
+        showOverlayWindow(prayer: prayer,
+                          prayerTime: prayerTimeService.timeForPrayer(prayer) ?? Date(),
+                          isJamaat: false,
+                          isTest: true)
+        return true
+    }
+
+    /// Testing-tab preview of the gold-accented jamaat variant of Overlay 1.
+    @discardableResult
+    func triggerJamaatTestNow() -> Bool {
+        guard prayerTimeService.isEnabled else { return false }
+
+        let targetPrayer: Prayer?
+        if let next = prayerTimeService.nextPrayer, next != .sunrise {
+            targetPrayer = next
+        } else {
+            targetPrayer = Prayer.adjustable.first
+        }
+        guard let prayer = targetPrayer else { return false }
+
+        let entry = prayerTimeService.todayPrayers.first { $0.prayer == prayer }
+        let jamaatTime = entry.flatMap { resolvedJamaatTime(for: $0) }
+        showOverlayWindow(prayer: prayer,
+                          prayerTime: jamaatTime ?? prayerTimeService.timeForPrayer(prayer) ?? Date(),
+                          isJamaat: true,
+                          isTest: true)
         return true
     }
 
     // MARK: - Private
 
-    private func fireOverlay(for prayer: Prayer, triggerTime: Date) {
+    private func fireOverlay(for prayer: Prayer) {
         guard prayerTimeService.isEnabled else { return }
         guard !dismissedPrayers.contains(prayer.rawValue) else { return }
-
-        // Suppress Overlay 1 when the predecessor prayer's Overlay 2 covers the
-        // same moment. In the prayer schedule each waqt's end equals the next
-        // waqt's start (Isha→Fajr, Maghrib→Isha, Asr→Maghrib, Dhuhr→Asr), so
-        // Overlay 2 for prayer X (fires at X.end – warning) and Overlay 1 for
-        // prayer Y (fires at Y.start – warning) collide. The Overlay 2 already
-        // shows the upcoming prayer's name, so showing Overlay 1 back-to-back
-        // is redundant and confusing.
-        if predecessorOverlay2CoversThisTransition(prayer: prayer) {
-            scheduledTimers.removeValue(forKey: prayer.rawValue)
-            return
-        }
 
         let defaults = UserDefaults.standard
         let pKey = prayer.rawValue
@@ -151,46 +189,33 @@ final class PrayerOverlayService {
         let overrideDND = dnds[pKey] ?? true
 
         if !overrideDND {
-            // Respect DND/Focus is active — skip if DND active
+            // Respect DND/Focus: skip while DND is active. `firedPrayers` is
+            // deliberately not marked here, so the catch-up path retries on
+            // the next refresh and the reminder still shows if Focus ends
+            // while the reminder window is open.
             if let dndEnabled = UserDefaults(suiteName: "com.apple.notificationcenterui")?.bool(forKey: "doNotDisturb"),
                dndEnabled {
                 return
             }
         }
 
-        showOverlayWindow(prayer: prayer, prayerTime: triggerTime)
-        scheduledTimers.removeValue(forKey: prayer.rawValue)
+        firedPrayers.insert(pKey)
+        scheduledTimers.removeValue(forKey: pKey)?.invalidate()
+        snoozeTimers.removeValue(forKey: pKey)?.invalidate()
+
+        // Show the prayer's actual start time (or jamaat time when one
+        // applies), not the moment the timer happened to fire. Jamaat firings
+        // get their own gold-accented styling so the two reminders read
+        // differently at a glance.
+        let entry = prayerTimeService.todayPrayers.first { $0.prayer == prayer }
+        let jamaatTime = entry.flatMap { resolvedJamaatTime(for: $0) }
+        showOverlayWindow(prayer: prayer,
+                          prayerTime: jamaatTime ?? entry?.time ?? Date(),
+                          isJamaat: jamaatTime != nil,
+                          isTest: false)
     }
 
-    /// The prayer whose waqt immediately precedes `prayer`. Returns nil for
-    /// Dhuhr (its predecessor is the no-prayer gap after sunrise) and sunrise.
-    private func predecessor(of prayer: Prayer) -> Prayer? {
-        switch prayer {
-        case .fajr:    return .isha
-        case .sunrise: return nil
-        case .dhuhr:   return nil
-        case .asr:     return .dhuhr
-        case .maghrib: return .asr
-        case .isha:    return .maghrib
-        }
-    }
-
-    /// True when the predecessor prayer X exists, has Overlay 2 enabled, and
-    /// `X.endTime ≈ prayer.startTime` (so X's Overlay 2 and this Overlay 1
-    /// would fire at the same instant). 60-second tolerance covers Adhan's
-    /// jitter and per-prayer offset adjustments.
-    private func predecessorOverlay2CoversThisTransition(prayer: Prayer) -> Bool {
-        guard let pred = predecessor(of: prayer) else { return false }
-        guard let predEnd = prayerTimeService.prayerEndTime(pred) else { return false }
-        guard let thisStart = prayerTimeService.timeForPrayer(prayer) else { return false }
-        guard abs(predEnd.timeIntervalSince(thisStart)) < 60 else { return false }
-
-        let overlay2PerPrayer = (UserDefaults.standard.dictionary(forKey: AppSettingsKey.overlay2PerPrayer) as? [String: Bool])
-            ?? AppSettingsDefault.defaultOverlay2PerPrayer
-        return overlay2PerPrayer[pred.rawValue] ?? true
-    }
-
-    private func showOverlayWindow(prayer: Prayer, prayerTime: Date) {
+    private func showOverlayWindow(prayer: Prayer, prayerTime: Date, isJamaat: Bool, isTest: Bool) {
         dismissOverlayWindowOnly()
 
         Task { @MainActor in
@@ -198,11 +223,13 @@ final class PrayerOverlayService {
         }
 
         activePrayer = prayer
+        activeOverlayIsTest = isTest
         let endTime = prayerTimeService.prayerEndTime(prayer)
         let window = PrayerOverlayWindow(
             prayer: prayer,
             prayerTime: prayerTime,
             prayerEndTime: endTime,
+            isJamaat: isJamaat,
             onDismiss: { [weak self] in self?.dismissOverlay() },
             onSnooze: { [weak self] minutes in self?.snoozeOverlay(minutes: minutes) }
         )
@@ -215,48 +242,42 @@ final class PrayerOverlayService {
         overlayWindow = nil
     }
 
+    /// When the sibling overlay (stacked on top) closes, hand key status back
+    /// to this service's still-visible window so Esc/Return/snooze shortcuts
+    /// work without requiring a click.
+    private func restoreKeyWindowIfVisible() {
+        guard let window = overlayWindow, window.isVisible else { return }
+        window.makeKeyAndOrderFront(nil)
+    }
+
     private func startPeriodicRefresh() {
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             Task { @MainActor in
-                self?.cleanupDismissed()
+                self?.cleanupExpiredState()
                 self?.scheduleOverlays()
             }
         }
         RunLoop.main.add(refreshTimer!, forMode: .common)
     }
 
-    private func cleanupDismissed() {
+    /// Clears dismissed/fired markers once a prayer's reminder window
+    /// (fire time plus grace) has fully passed, so the same prayer can
+    /// remind again tomorrow. Clearing any earlier would let the catch-up
+    /// path re-fire a reminder the user already handled.
+    private func cleanupExpiredState() {
         let now = Date()
-        var toRemove: [String] = []
-        for key in dismissedPrayers {
+        func isExpired(_ key: String) -> Bool {
             guard let prayer = Prayer(rawValue: key),
-                  let time = prayerTimeService.timeForPrayer(prayer) else {
-                toRemove.append(key)
-                continue
-            }
-            // Clear dismissed state after the prayer time has passed
-            if time < now {
-                toRemove.append(key)
-            }
+                  let entry = prayerTimeService.todayPrayers.first(where: { $0.prayer == prayer })
+            else { return true }
+            let deadline = PrayerOverlayScheduling.validUntil(
+                prayerStart: entry.time,
+                jamaatTime: resolvedJamaatTime(for: entry)
+            )
+            return deadline < now
         }
-        toRemove.forEach { dismissedPrayers.remove($0) }
-    }
-
-    private func overlayFireTime(for prayerTime: PrayerTime) -> Date {
-        if let jamaatTime = resolvedJamaatTime(for: prayerTime) {
-            return jamaatTime
-        }
-
-        let warningInterval = warningMinutes * 60
-        return prayerTime.time.addingTimeInterval(-warningInterval)
-    }
-
-    private func overlayWakeValidUntil(for prayerTime: PrayerTime, fireTime: Date) -> Date {
-        if resolvedJamaatTime(for: prayerTime) != nil {
-            return fireTime.addingTimeInterval(wakeGraceMinutes * 60)
-        }
-
-        return prayerTime.time
+        dismissedPrayers = dismissedPrayers.filter { !isExpired($0) }
+        firedPrayers = firedPrayers.filter { !isExpired($0) }
     }
 
     private func resolvedJamaatTime(for prayerTime: PrayerTime) -> Date? {

@@ -334,18 +334,20 @@ struct PrayerEndingOverlayView: View {
                 .padding(.bottom, 26)
 
                 // Snooze row — pills slightly bigger, text @0.92 (~16:1).
-                // Each snooze pill is disabled when the snooze duration would
-                // push past the waqt's end — no point reminding after the
-                // window has closed. Dismiss is always enabled.
+                // Shorter snooze options than the start reminder because the
+                // window is already closing. Each snooze pill is disabled when
+                // the snooze duration would push past the waqt's end — no
+                // point reminding after the window has closed. Dismiss is
+                // always enabled.
                 HStack(spacing: 14) {
-                    snoozePill(label: "Remind in 15m", key: "1", textSize: snoozeTextSize,
-                               disabled: snoozeWouldExceedWaqt(minutes: 15),
-                               action: { onSnooze(15) })
+                    snoozePill(label: "Remind in 10m", key: "1", textSize: snoozeTextSize,
+                               disabled: snoozeWouldExceedWaqt(minutes: 10),
+                               action: { onSnooze(10) })
                         .keyboardShortcut("1", modifiers: [])
-                    snoozePill(label: "Remind in 30m", key: "3", textSize: snoozeTextSize,
-                               disabled: snoozeWouldExceedWaqt(minutes: 30),
-                               action: { onSnooze(30) })
-                        .keyboardShortcut("3", modifiers: [])
+                    snoozePill(label: "Remind in 5m", key: "5", textSize: snoozeTextSize,
+                               disabled: snoozeWouldExceedWaqt(minutes: 5),
+                               action: { onSnooze(5) })
+                        .keyboardShortcut("5", modifiers: [])
                     snoozePill(label: "Dismiss", key: "ESC", textSize: snoozeTextSize,
                                disabled: false, action: onDismiss)
                         .keyboardShortcut(.escape, modifiers: [])

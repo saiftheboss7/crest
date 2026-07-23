@@ -352,4 +352,23 @@ final class PrayerTimeService {
     func formattedHighlightCountdown() -> String {
         Self.formatHighlightCountdown(highlightCountdown, isActive: isInActivePrayerWindow)
     }
+
+    /// Like `formattedHighlightCountdown` but, when the prayer's window is
+    /// currently active, suffixes the absolute end-of-waqt clock time
+    /// ("1h 20m 45s left. Ends at 5:14 AM"). Lets the user see both the
+    /// urgency (relative) and the actual clock time (absolute) at a glance.
+    func formattedHighlightCountdownWithEndTime() -> String {
+        let base = formattedHighlightCountdown()
+        guard isInActivePrayerWindow,
+              let prayer = highlightedPrayer,
+              let end = prayerEndTime(prayer)
+        else { return base }
+        return "\(base). Ends at \(Self.absoluteTimeFormatter.string(from: end))"
+    }
+
+    private static let absoluteTimeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "h:mm a"
+        return f
+    }()
 }

@@ -32,6 +32,7 @@
 		6ED94B515257AF1F0FEFC346 /* EventListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E7C5111C19071CEEEC81E75 /* EventListView.swift */; };
 		6EEF9B2799167B11B8E58E0C /* CrestLaunchUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C694131F58A08C379B11D099 /* CrestLaunchUITests.swift */; };
 		7304066B00F7974744FEDDDE /* PrayerTimesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C256ED20E676B026299C726 /* PrayerTimesView.swift */; };
+		7366B0C5D2C36607BEAA59FE /* PrayerOverlayScheduling.swift in Sources */ = {isa = PBXBuildFile; fileRef = 566A36BC0C0917F9FED91149 /* PrayerOverlayScheduling.swift */; };
 		743B66FDBB7043CC63882DDE /* PopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60DEFEFB94D81CDE3C8DD22E /* PopoverView.swift */; };
 		7D38FA4B37BB6F01BBA41A64 /* CalendarSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F54E2C0031F04188666E4DB /* CalendarSettingsView.swift */; };
 		808B5128859E6D10C58C2467 /* TestingSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D133BA25A72F587B21EA9510 /* TestingSettingsView.swift */; };
@@ -46,6 +47,7 @@
 		AB742890B04CCF39CD7654A1 /* EventRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDE3FAFDD9F8548C396EA47 /* EventRowView.swift */; };
 		AC96FC442D11AA8A1DDD6BD8 /* PrayerTimeServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28470766D400C128A79B24B7 /* PrayerTimeServiceTests.swift */; };
 		B36A39B2696C9467B8FF8AEE /* PrayerEndingOverlayService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0EAC779CA609C61D89E6B04 /* PrayerEndingOverlayService.swift */; };
+		B38A90A20F3B239DC85C1D8A /* PrayerOverlaySchedulingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF57BE51781459381566787F /* PrayerOverlaySchedulingTests.swift */; };
 		B4A7A196F8A22013B6BA4D2C /* MiniCalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3C39EA21A51B50C82590724 /* MiniCalendarView.swift */; };
 		BA49B42F6E54474F19043476 /* PrayerModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34FF48833057677FE05C39CC /* PrayerModels.swift */; };
 		BACA6E41617EB4D9EE677451 /* MeetingLinkDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 024393D69E85CDA7C13C6AC6 /* MeetingLinkDetector.swift */; };
@@ -102,6 +104,7 @@
 		49C5646A45BA81ECDE709EB8 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		4E84418163FAABEA8D221BD2 /* PrayerEndingOverlayWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerEndingOverlayWindow.swift; sourceTree = "<group>"; };
 		4FC25A0221AF4210A0E2B5C4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		566A36BC0C0917F9FED91149 /* PrayerOverlayScheduling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerOverlayScheduling.swift; sourceTree = "<group>"; };
 		5E09E37DC892544D9EAE6B99 /* AppSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsTests.swift; sourceTree = "<group>"; };
 		6094DF373320F29BCCB87B51 /* CityPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CityPreset.swift; sourceTree = "<group>"; };
 		60DEFEFB94D81CDE3C8DD22E /* PopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverView.swift; sourceTree = "<group>"; };
@@ -138,6 +141,7 @@
 		DAC56184E1B2A47F02BC7779 /* DateFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatting.swift; sourceTree = "<group>"; };
 		DB613C7439CEE1F9E784B085 /* LocationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationServiceTests.swift; sourceTree = "<group>"; };
 		DC20B7E89F0D072779F0C977 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		DF57BE51781459381566787F /* PrayerOverlaySchedulingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerOverlaySchedulingTests.swift; sourceTree = "<group>"; };
 		E34A4523D4F09B043E177A9C /* MeshWallpaperView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshWallpaperView.swift; sourceTree = "<group>"; };
 		E60A28E0726F8F077868FAAD /* DateFormattingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormattingTests.swift; sourceTree = "<group>"; };
 		F030B2E2DC44A485B760B202 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
@@ -170,6 +174,7 @@
 				D11B81E7A19A210CA634D084 /* MeetingLinkDetectorTests.swift */,
 				9F1D08B38DEC6D89904D3BAC /* PrayerCountdownFormatterTests.swift */,
 				B2195E6D92D0AB4842D7028D /* PrayerModelsTests.swift */,
+				DF57BE51781459381566787F /* PrayerOverlaySchedulingTests.swift */,
 				28470766D400C128A79B24B7 /* PrayerTimeServiceTests.swift */,
 			);
 			path = CrestTests;
@@ -219,6 +224,7 @@
 				024393D69E85CDA7C13C6AC6 /* MeetingLinkDetector.swift */,
 				D0EAC779CA609C61D89E6B04 /* PrayerEndingOverlayService.swift */,
 				D2FC315B66CB4056F378BCFF /* PrayerNotificationService.swift */,
+				566A36BC0C0917F9FED91149 /* PrayerOverlayScheduling.swift */,
 				86322D1190012AC327623FB3 /* PrayerOverlayService.swift */,
 				8D91B0877FE5D9B2D3058D45 /* PrayerTimeService.swift */,
 				4598905CB0F114A151B4204A /* SleepWakeService.swift */,
@@ -483,6 +489,7 @@
 				EFE3F2877C849E03D9F844E8 /* MeetingLinkDetectorTests.swift in Sources */,
 				2BCE350FF7273C5445A77928 /* PrayerCountdownFormatterTests.swift in Sources */,
 				09BE64AB2FEA30A0709294C1 /* PrayerModelsTests.swift in Sources */,
+				B38A90A20F3B239DC85C1D8A /* PrayerOverlaySchedulingTests.swift in Sources */,
 				AC96FC442D11AA8A1DDD6BD8 /* PrayerTimeServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -524,6 +531,7 @@
 				2D3C9441BD3B154D2995BC66 /* PrayerLocationEmptyStateView.swift in Sources */,
 				BA49B42F6E54474F19043476 /* PrayerModels.swift in Sources */,
 				A9A88634D5ABA65399433F77 /* PrayerNotificationService.swift in Sources */,
+				7366B0C5D2C36607BEAA59FE /* PrayerOverlayScheduling.swift in Sources */,
 				273A281FE4F528B0040055BB /* PrayerOverlayService.swift in Sources */,
 				94B25719D881F4E0E14D1680 /* PrayerOverlayView.swift in Sources */,
 				2B5C8500295F79349BB0969D /* PrayerOverlayWindow.swift in Sources */,
@@ -635,7 +643,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.0.5;
+				MARKETING_VERSION = 0.0.6;
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.crest.app;
 				SDKROOT = macosx;
@@ -737,7 +745,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.0.5;
+				MARKETING_VERSION = 0.0.6;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.crest.app;
 				SDKROOT = macosx;

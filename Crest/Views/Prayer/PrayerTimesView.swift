@@ -125,16 +125,18 @@ struct PrayerTimesView: View {
         )
     }
 
-    /// "1h 20m 45s left" / "in 20m" badge — coloured text on a same-hue tinted
-    /// fill. AAA contrast is not satisfied with this combination (the brand-
-    /// coloured text vs same-hue tinted fill yields roughly 3:1), but the
-    /// aesthetic is the priority here and the surrounding row provides
-    /// supporting context (the prayer name itself stays at .primary AAA).
+    /// "1h 20m 45s left. Ends at 5:14 AM" / "Starts in 20m" badge — coloured
+    /// text on a same-hue tinted fill. AAA contrast is not satisfied with
+    /// this combination (brand-coloured text vs same-hue tinted fill yields
+    /// roughly 3:1), but the aesthetic is the priority here and the
+    /// surrounding row provides supporting context (the prayer name itself
+    /// stays at .primary AAA).
     private var countdownBadge: some View {
         let tint = urgency.tint
-        return Text(prayerTimeService.formattedHighlightCountdown())
+        return Text(prayerTimeService.formattedHighlightCountdownWithEndTime())
             .font(.caption.monospacedDigit())
             .foregroundStyle(tint)
+            .multilineTextAlignment(.trailing)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
             .background(
@@ -146,7 +148,7 @@ struct PrayerTimesView: View {
                     .stroke(tint.opacity(0.32), lineWidth: 0.75)
             )
             // monospacedDigit means the badge width is stable as digits change,
-            // but the leading text ("1h …" vs "20m …") still varies slightly —
+            // but the leading text ("1h …" vs "20m …") still varies slightly,
             // this layout priority stops the layout from jumping every second.
             .layoutPriority(1)
     }

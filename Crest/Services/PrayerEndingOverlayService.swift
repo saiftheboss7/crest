@@ -6,6 +6,9 @@ import AppKit
 final class PrayerEndingOverlayService {
     private let prayerTimeService: PrayerTimeService
     private var scheduledTimers: [String: Timer] = [:]
+    /// User-initiated snooze timers, kept separate from `scheduledTimers` so
+    /// the periodic schedule rebuild cannot invalidate a pending snooze.
+    private var snoozeTimers: [String: Timer] = [:]
     private var dismissedPrayers: Set<String> = []
     private var refreshTimer: Timer?
     private(set) var overlayWindow: PrayerEndingOverlayWindow?
@@ -15,6 +18,16 @@ final class PrayerEndingOverlayService {
         self.prayerTimeService = prayerTimeService
         startPeriodicRefresh()
         scheduleOverlays()
+
+        NotificationCenter.default.addObserver(
+            forName: .prayerOverlayWindowDidClose,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.restoreKeyWindowIfVisible()
+            }
+        }
     }
 
     private func warningMinutes(for prayer: Prayer) -> TimeInterval {
@@ -52,8 +65,9 @@ final class PrayerEndingOverlayService {
 
             guard let endTime = prayerTimeService.prayerEndTime(prayer) else { continue }
 
-            let warningInterval = warningMinutes(for: prayer) * 60
-            let fireTime = endTime.addingTimeInterval(-warningInterval)
+            let fireTime = PrayerOverlayScheduling.endingReminderFireTime(
+                prayerEnd: endTime, warningMinutes: warningMinutes(for: prayer)
+            )
             guard fireTime > now else { continue }
 
             let delay = fireTime.timeIntervalSince(now)
@@ -74,6 +88,7 @@ final class PrayerEndingOverlayService {
         overlayWindow?.close()
         overlayWindow = nil
         activePrayer = nil
+        NotificationCenter.default.post(name: .prayerOverlayWindowDidClose, object: nil)
     }
 
     /// Called by SleepWakeService on wake — fires any missed overlays still within the valid window.
@@ -93,8 +108,9 @@ final class PrayerEndingOverlayService {
             guard !dismissedPrayers.contains(prayer.rawValue) else { continue }
 
             guard let endTime = prayerTimeService.prayerEndTime(prayer) else { continue }
-            let warningInterval = warningMinutes(for: prayer) * 60
-            let fireTime = endTime.addingTimeInterval(-warningInterval)
+            let fireTime = PrayerOverlayScheduling.endingReminderFireTime(
+                prayerEnd: endTime, warningMinutes: warningMinutes(for: prayer)
+            )
 
             if fireTime <= now && endTime > now {
                 fireOverlay(for: prayer, prayerEndTime: endTime)
@@ -153,7 +169,8 @@ final class PrayerEndingOverlayService {
 
         showOverlayWindow(prayer: prayer, prayerEndTime: prayerEndTime,
                           nextPrayer: nextPrayer, nextPrayerStartTime: nextPrayerStartTime)
-        scheduledTimers.removeValue(forKey: prayer.rawValue)
+        scheduledTimers.removeValue(forKey: prayer.rawValue)?.invalidate()
+        snoozeTimers.removeValue(forKey: prayer.rawValue)?.invalidate()
     }
 
     private func nextPrayerAfter(_ prayer: Prayer) -> Prayer? {
@@ -172,17 +189,19 @@ final class PrayerEndingOverlayService {
 
         dismissOverlayWindowOnly()
         activePrayer = nil
+        NotificationCenter.default.post(name: .prayerOverlayWindowDidClose, object: nil)
 
         let snoozeFireTime = Date().addingTimeInterval(TimeInterval(minutes * 60))
         guard snoozeFireTime < endTime else { return }
 
+        snoozeTimers[prayer.rawValue]?.invalidate()
         let timer = Timer.scheduledTimer(withTimeInterval: TimeInterval(minutes * 60), repeats: false) { [weak self] _ in
             Task { @MainActor in
                 self?.fireOverlay(for: prayer, prayerEndTime: endTime)
             }
         }
         RunLoop.main.add(timer, forMode: .common)
-        scheduledTimers[prayer.rawValue] = timer
+        snoozeTimers[prayer.rawValue] = timer
     }
 
     private func showOverlayWindow(prayer: Prayer, prayerEndTime: Date,
@@ -205,6 +224,14 @@ final class PrayerEndingOverlayService {
     private func dismissOverlayWindowOnly() {
         overlayWindow?.close()
         overlayWindow = nil
+    }
+
+    /// When the sibling overlay (stacked on top) closes, hand key status back
+    /// to this service's still-visible window so Esc/Return/snooze shortcuts
+    /// work without requiring a click.
+    private func restoreKeyWindowIfVisible() {
+        guard let window = overlayWindow, window.isVisible else { return }
+        window.makeKeyAndOrderFront(nil)
     }
 
     private func startPeriodicRefresh() {

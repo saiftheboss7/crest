@@ -93,6 +93,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @discardableResult
     func triggerJamaatAlertTestNow() -> Bool {
-        prayerOverlayService?.triggerOverlay1TestNow() ?? false
+        prayerOverlayService?.triggerJamaatTestNow() ?? false
     }
 }

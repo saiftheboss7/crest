@@ -58,24 +58,24 @@ Crest is a native Swift/SwiftUI macOS menu bar app focused on **calendar events,
 
 Two separate full-screen overlays fire per prayer. Both can be individually toggled per prayer in Settings.
 
-#### Overlay 1 — Pre-Prayer Warning (15 min before prayer starts)
+#### Overlay 1: Prayer Start Reminder (at prayer start)
 
-Fires exactly 15 minutes before each prayer's start time.
+Fires at the prayer's start time (or at the configured jamaat time when jamaat times are enabled). It always fires after the predecessor prayer's Overlay 2, never simultaneously with it.
 
 - Full-screen non-blocking NSWindow overlay
-- Shows: prayer name in Arabic + transliteration, "Prayer in 15 minutes" label, live countdown updating every second
+- Shows: prayer name in Arabic + transliteration, the prayer's start time, live countdown updating every second
 - Thin circular arc animating down from full to empty over 15 minutes
 - Actions: **Snooze 5 min** (simple button click, re-shows in 5 minutes), **Dismiss** (requires typing "inshallah" to confirm dismissal)
 - Esc key is blocked — the only way to close is typing "inshallah" or snoozing
 - Non-blocking — user can still interact with apps behind it
 
-#### Overlay 2 — Prayer Ending Warning (20 min before prayer window closes)
+#### Overlay 2: Prayer Ending Warning (15 min before prayer window closes)
 
-Fires when only 20 minutes remain in the current prayer's time window (i.e., 20 min before the next prayer begins).
+Fires when only 15 minutes remain in the current prayer's time window (i.e., 15 min before the next prayer begins). The offset is configurable globally and per prayer.
 
 - Full-screen **blocking** NSWindow overlay — captures input to demand attention
 - Urgent tone: warmer/amber colour scheme to distinguish from Overlay 1
-- Shows: prayer name, "Prayer time ending in 20 minutes", live countdown, next prayer name and its start time
+- Shows: prayer name, "Prayer time ending in 15 minutes", live countdown, next prayer name and its start time
 - Actions: **Dismiss** (requires typing "inshallah" to confirm dismissal)
 - Esc key is blocked — the only way to close is typing "inshallah"
 - Intended as a final urgent reminder for users who haven't prayed yet

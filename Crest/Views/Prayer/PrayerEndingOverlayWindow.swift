@@ -92,7 +92,7 @@ final class PrayerEndingOverlayWindow: NSPanel {
 
     override func keyDown(with event: NSEvent) {
         // Forward to the responder chain so SwiftUI `.keyboardShortcut`
-        // declarations on the buttons (1, 3, Esc, Return) fire.
+        // declarations on the buttons (1 = 10m, 5 = 5m, Esc, Return) fire.
         super.keyDown(with: event)
     }
 

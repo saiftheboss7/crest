@@ -31,12 +31,13 @@ xcodebuild test -project Crest.xcodeproj -scheme Crest \
 | `MeetingLinkDetectorTests.swift`   | Regex patterns, generic-URL fallback | One assertion per major service + non-meeting URLs return `nil`       |
 | `PrayerTimeServiceTests.swift`     | Adhan integration, recompute output  | Integration smoke test using a static location fixture (Dhaka coords) |
 | `AppSettingsTests.swift`           | Keys/defaults coherence              | Round-trips `UserDefaults`, asserts every per-prayer dict has 5 keys  |
+| `PrayerOverlaySchedulingTests.swift` | Start reminder (Overlay 1) timing decisions | Simulated-clock scenarios; regression for start reminders suppressed on contiguous waqts (Dhuhr ends 4:44, Asr starts 4:44). Pins sequencing: ending reminder 15 min before the boundary, start reminder at the boundary |
 
 ### What's intentionally NOT covered
 
 - **SwiftUI views** — no snapshot or UI tests yet. Use the manual checklist (Section 3).
 - **`EKEventStore`, `NSSound`, `AVAudioPlayer`, `CLLocationManager`** — system integrations, not worth mocking in v1.
-- **Overlay scheduling timers** (`PrayerOverlayService`, `PrayerEndingOverlayService`) — wall-clock dependent. Use the in-app **Test Overlay 1/2 Now** buttons instead.
+- **Overlay timer plumbing** (`PrayerOverlayService`, `PrayerEndingOverlayService`) — the *decisions* (fire time, catch-up, skip) live in `PrayerOverlayScheduling` and are unit-tested with simulated clocks; the `Timer`/window wiring around them is wall-clock dependent. Use the in-app **Test Overlay 1/2 Now** buttons for that layer.
 - **Sleep/wake transitions** — test manually by locking the Mac.
 
 ### Adding a test
@@ -135,7 +136,14 @@ Tick every item that applies to your change. Each scenario lists the surface, wh
 
 - [ ] **Test Overlay 2 Now** displays the end-of-window overlay.
 - [ ] Content references the active/next prayer window correctly.
+- [ ] Snooze options are **Remind in 10m** (key 1) and **Remind in 5m** (key 5); each disables when it would pass the waqt end.
 - [ ] **Dismiss** closes the overlay.
+
+### Overlay stacking
+
+- [ ] With Overlay 2 left open, the next prayer's Overlay 1 still fires and appears **on top** (most recently fired wins).
+- [ ] Closing the top overlay reveals the older one underneath, and its keyboard shortcuts (Esc / Return / snooze keys) work without clicking first.
+- [ ] Quick check: fire **Test Overlay 2 Now**, then **Test Overlay 1 Now** from Settings via Cmd+comma; Overlay 1 is on top; dismiss it and Overlay 2 responds to Esc.
 
 ### Jamaat alert
 
