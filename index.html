@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crest for Mac. Your day has a rhythm.</title>
+<meta name="description" content="Crest lives quietly in your Mac's menu bar and speaks up at exactly the right moment. Meetings never start without you. Prayers never slip past you. Free and open source.">
+<meta property="og:title" content="Crest for Mac. Your day has a rhythm.">
+<meta property="og:description" content="A menu bar companion for meetings, your calendar, and prayer times. Free, open source, private by design.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://saiftheboss7.github.io/crest/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230F766E'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif'%3E%E2%98%BE%3C/text%3E%3C/svg%3E">
+<style>
+  /* ---------- Reset & tokens ---------- */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #fbfbfd;
+    --bg-alt: #f5f5f7;
+    --ink: #1d1d1f;
+    --ink-2: #515154;          /* secondary text, 7.4:1 on --bg */
+    --ink-3: #6e6e73;          /* captions, large sizes only */
+    --teal-700: #0f766e;       /* Tailwind teal-700, brand accent */
+    --teal-600: #0d9488;
+    --teal-400: #2dd4bf;
+    --teal-100: #ccfbf1;
+    --gold: #e4b75b;
+    --amber: #ff9f5a;
+    --card-dark: #0a0a0c;
+    --hairline: rgba(0,0,0,.08);
+    --radius-lg: 28px;
+    --radius-md: 18px;
+    --ease-out: cubic-bezier(.22, 1, .36, 1);
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: var(--teal-100); color: var(--teal-700); }
+
+  /* ---------- Accessibility helpers ---------- */
+  .skip-link {
+    position: absolute; left: 16px; top: -60px; z-index: 100;
+    background: var(--teal-700); color: #fff; font-weight: 600;
+    padding: 12px 20px; border-radius: 12px; text-decoration: none;
+    transition: top .2s var(--ease-out);
+  }
+  .skip-link:focus { top: 16px; }
+
+  :focus-visible {
+    outline: 3px solid var(--teal-600);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+
+  /* ---------- Nav ---------- */
+  .nav {
+    position: fixed; inset: 0 0 auto 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px clamp(20px, 5vw, 48px);
+    transition: background .35s ease, box-shadow .35s ease;
+  }
+  .nav.scrolled {
+    background: rgba(251, 251, 253, .78);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    box-shadow: 0 1px 0 var(--hairline);
+  }
+  .nav-brand {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 19px; font-weight: 700; letter-spacing: -.02em;
+    color: var(--ink); text-decoration: none;
+  }
+  .nav-brand .mark {
+    display: grid; place-items: center; width: 30px; height: 30px;
+    background: var(--teal-700); color: #fff; border-radius: 8.5px;
+    font-size: 16px;
+  }
+  .nav-links { display: flex; align-items: center; gap: clamp(14px, 3vw, 30px); list-style: none; }
+  .nav-links a {
+    color: var(--ink-2); text-decoration: none; font-size: 14.5px; font-weight: 500;
+    transition: color .2s ease;
+  }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-cta {
+    background: var(--teal-700); color: #fff !important; font-weight: 600 !important;
+    padding: 8px 18px; border-radius: 999px;
+    transition: transform .2s var(--ease-out), background .2s ease;
+  }
+  .nav-cta:hover { background: var(--teal-600); transform: scale(1.04); }
+  @media (max-width: 640px) { .nav-links li.hide-sm { display: none; } }
+
+  /* ---------- Shared layout ---------- */
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 48px); }
+  section { padding: clamp(88px, 12vw, 150px) 0; }
+  .section-alt { background: var(--bg-alt); }
+
+  .eyebrow {
+    display: inline-block;
+    font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--teal-700); margin-bottom: 18px;
+  }
+  h1, h2 { letter-spacing: -.025em; line-height: 1.06; text-wrap: balance; }
+  h2 { font-size: clamp(34px, 5.4vw, 60px); font-weight: 700; margin-bottom: 22px; }
+  .lead {
+    font-size: clamp(19px, 2.4vw, 24px); line-height: 1.45;
+    color: var(--ink-2); max-width: 34em; text-wrap: pretty;
+  }
+  .lead strong { color: var(--ink); font-weight: 600; }
+
+  .split {
+    display: grid; grid-template-columns: 1fr 1fr; gap: clamp(40px, 6vw, 90px);
+    align-items: center;
+  }
+  @media (max-width: 860px) { .split { grid-template-columns: 1fr; } }
+
+  /* ---------- Reveal-on-scroll ---------- */
+  .reveal {
+    opacity: 0; transform: translateY(30px);
+    transition: opacity .9s var(--ease-out), transform .9s var(--ease-out);
+    transition-delay: var(--d, 0s);
+  }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* Gentle parallax drift for mockups on browsers with scroll-driven animations */
+  @supports (animation-timeline: view()) {
+    .drift {
+      animation: drift linear both;
+      animation-timeline: view();
+      animation-range: entry 0% exit 100%;
+    }
+    @keyframes drift {
+      from { transform: translateY(46px); }
+      to   { transform: translateY(-46px); }
+    }
+  }
+
+  /* ---------- Hero ---------- */
+  .hero { padding: clamp(150px, 20vh, 220px) 0 clamp(80px, 10vw, 130px); text-align: center; }
+  .hero h1 {
+    font-size: clamp(46px, 8.6vw, 102px); font-weight: 700;
+    margin: 0 auto 26px; max-width: 12em;
+  }
+  .hero h1 .line { display: block; overflow: hidden; }
+  .hero h1 .line > span {
+    display: inline-block;
+    transform: translateY(110%);
+    animation: rise 1s var(--ease-out) forwards;
+  }
+  .hero h1 .line:nth-child(2) > span { animation-delay: .12s; }
+  @keyframes rise { to { transform: translateY(0); } }
+
+  .grad {
+    background: linear-gradient(96deg, var(--teal-700), var(--teal-400) 60%, var(--gold));
+    background-size: 200% 100%;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    animation: shimmer 9s ease-in-out infinite alternate;
+  }
+  @keyframes shimmer { to { background-position: 100% 0; } }
+
+  .hero .lead { margin: 0 auto 40px; }
+
+  .cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 18px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 17px; font-weight: 600; text-decoration: none;
+    padding: 14px 28px; border-radius: 999px; min-height: 44px;
+    transition: transform .25s var(--ease-out), background .2s ease, box-shadow .25s ease;
+  }
+  .btn-primary {
+    background: var(--teal-700); color: #fff;
+    box-shadow: 0 10px 28px rgba(15, 118, 110, .28);
+  }
+  .btn-primary:hover { background: var(--teal-600); transform: translateY(-2px) scale(1.02); box-shadow: 0 16px 36px rgba(15, 118, 110, .34); }
+  .btn-secondary { color: var(--teal-700); background: transparent; box-shadow: inset 0 0 0 1.5px rgba(15, 118, 110, .45); }
+  .btn-secondary:hover { background: rgba(15, 118, 110, .07); transform: translateY(-2px); }
+  .fineprint { font-size: 13.5px; color: var(--ink-3); }
+
+  /* ---------- Menu bar mockup ---------- */
+  .hero-visual { margin-top: clamp(56px, 8vw, 96px); display: grid; justify-items: center; gap: 0; }
+  .menubar {
+    width: min(720px, 92vw);
+    display: flex; align-items: center; justify-content: flex-end; gap: 14px;
+    background: rgba(255,255,255,.82);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    border: 1px solid var(--hairline); border-radius: 14px;
+    padding: 9px 16px;
+    box-shadow: 0 18px 50px rgba(0,0,0,.10);
+    font-size: 13.5px; font-weight: 500;
+  }
+  .menubar .spacer { margin-right: auto; display: flex; gap: 8px; }
+  .menubar .spacer i { width: 10px; height: 10px; border-radius: 50%; background: #e3e3e8; }
+  .mb-item { color: var(--ink-3); }
+  .mb-crest {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--teal-700); color: #fff;
+    padding: 4px 12px; border-radius: 8px; font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .popover {
+    width: min(360px, 88vw);
+    margin-top: 14px;
+    background: #fff; border: 1px solid var(--hairline); border-radius: var(--radius-md);
+    box-shadow: 0 30px 70px rgba(0,0,0,.14);
+    padding: 18px; text-align: left;
+    animation: floaty 7s ease-in-out infinite;
+  }
+  @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+  .pop-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 4px; font-size: 13.5px; }
+  .pop-row + .pop-row { border-top: 1px solid var(--hairline); }
+  .pop-title { font-weight: 600; }
+  .pop-sub { color: var(--ink-3); font-size: 12px; }
+  .chip {
+    font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .chip-teal { background: rgba(15,118,110,.12); color: var(--teal-700); }
+  .chip-join { background: var(--teal-700); color: #fff; }
+  .chip-gold { background: rgba(228,183,91,.20); color: #8a6a1f; }
+
+  /* ---------- Dark device cards (meeting + prayer) ---------- */
+  .device {
+    position: relative; overflow: hidden;
+    background: var(--card-dark); color: #fff;
+    border-radius: var(--radius-lg);
+    padding: clamp(30px, 4.5vw, 54px);
+    box-shadow: 0 34px 80px rgba(10,10,12,.35);
+    text-align: center;
+  }
+  .device .glow {
+    position: absolute; inset: -35%;
+    background: radial-gradient(circle at 50% 42%, var(--glow-c, rgba(45,212,191,.20)), transparent 62%);
+    animation: breathe 6s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes breathe { 0%, 100% { opacity: .75; transform: scale(1); } 50% { opacity: 1; transform: scale(1.07); } }
+  .device > * { position: relative; }
+
+  .device .emoji-disc {
+    display: grid; place-items: center;
+    width: 76px; height: 76px; margin: 0 auto 18px;
+    border-radius: 50%; font-size: 34px;
+    background: rgba(45,212,191,.12); border: 1px solid rgba(45,212,191,.35);
+  }
+  .device h3 { font-size: clamp(26px, 3.4vw, 38px); font-weight: 650; letter-spacing: -.02em; color: var(--teal-400); margin-bottom: 8px; }
+  .device .when { font-weight: 300; font-size: 19px; color: rgba(255,255,255,.92); margin-bottom: 18px; }
+  .device .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums;
+    color: var(--teal-400); background: rgba(45,212,191,.12);
+    border: 1px solid rgba(45,212,191,.32);
+    padding: 8px 18px; border-radius: 999px; margin-bottom: 24px;
+  }
+  .device .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .device .act {
+    font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 999px;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.22);
+    color: rgba(255,255,255,.92);
+  }
+  .device .act-green { background: rgba(74,222,128,.12); border-color: rgba(34,197,94,.35); color: #4ade80; }
+
+  /* meeting ring */
+  .ring-wrap { position: relative; width: 108px; height: 108px; margin: 0 auto 18px; }
+  .ring-wrap svg { transform: rotate(-90deg); }
+  .ring-track { stroke: rgba(255,255,255,.12); }
+  .ring-arc {
+    stroke: #5eead4; stroke-linecap: round;
+    stroke-dasharray: 302;
+    animation: countdown 40s linear infinite;
+    filter: drop-shadow(0 0 8px rgba(94,234,212,.5));
+  }
+  @keyframes countdown { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 302; } }
+  .ring-num {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums;
+  }
+
+  .jamaat-note {
+    display: inline-flex; align-items: center; gap: 10px;
+    margin-top: 18px; padding: 10px 18px; border-radius: 999px;
+    background: rgba(228,183,91,.14); border: 1px solid rgba(228,183,91,.45);
+    color: #7a5c14; font-size: 13.5px; font-weight: 600;
+  }
+
+  /* ---------- Story paragraphs ---------- */
+  .story p { font-size: 17px; color: var(--ink-2); max-width: 32em; margin-top: 16px; text-wrap: pretty; }
+  .story p strong { color: var(--ink); font-weight: 600; }
+  .story .note { font-size: 14px; color: var(--ink-3); margin-top: 22px; }
+
+  /* ---------- Quiet details grid ---------- */
+  .grid-6 {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 56px;
+  }
+  @media (max-width: 860px) { .grid-6 { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 540px) { .grid-6 { grid-template-columns: 1fr; } }
+  .cell {
+    background: #fff; border: 1px solid var(--hairline); border-radius: var(--radius-md);
+    padding: 26px 24px;
+    transition: transform .35s var(--ease-out), box-shadow .35s var(--ease-out);
+  }
+  .cell:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,.08); }
+  .cell .ico { font-size: 26px; display: block; margin-bottom: 12px; }
+  .cell h4 { font-size: 16px; font-weight: 650; margin-bottom: 5px; letter-spacing: -.01em; }
+  .cell p { font-size: 13.5px; color: var(--ink-2); line-height: 1.5; }
+
+  /* ---------- Sadaqah ---------- */
+  .sadaqah { text-align: center; }
+  .sadaqah blockquote {
+    font-size: clamp(21px, 2.8vw, 28px); font-weight: 500; letter-spacing: -.015em;
+    line-height: 1.4; max-width: 26em; margin: 0 auto; color: var(--ink); text-wrap: balance;
+  }
+  .sadaqah blockquote em { color: var(--teal-700); font-style: normal; }
+  .sadaqah p { margin-top: 18px; font-size: 15px; color: var(--ink-3); }
+
+  /* ---------- Closing ---------- */
+  .closing { text-align: center; }
+  .closing h2 { font-size: clamp(40px, 7vw, 84px); }
+  .closing .lead { margin: 0 auto 40px; }
+
+  /* ---------- Footer ---------- */
+  footer {
+    border-top: 1px solid var(--hairline);
+    padding: 34px 0 46px; font-size: 13px; color: var(--ink-3);
+  }
+  footer .wrap { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+  footer a { color: var(--ink-2); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  footer nav { display: flex; gap: 22px; }
+
+  /* ---------- Reduced motion ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+    }
+    .reveal { opacity: 1; transform: none; }
+    .hero h1 .line > span { transform: none; animation: none; }
+    .drift { animation: none; }
+  }
+</style>
+<noscript><style>.reveal { opacity: 1; transform: none; }</style></noscript>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav" id="nav">
+  <a class="nav-brand" href="#top" aria-label="Crest home">
+    <span class="mark" aria-hidden="true">☾</span> Crest
+  </a>
+  <nav aria-label="Primary">
+    <ul class="nav-links">
+      <li class="hide-sm"><a href="#meetings">Meetings</a></li>
+      <li class="hide-sm"><a href="#prayer">Prayer</a></li>
+      <li class="hide-sm"><a href="#privacy">Privacy</a></li>
+      <li><a href="https://github.com/saiftheboss7/crest">GitHub</a></li>
+      <li><a class="nav-cta" href="https://github.com/saiftheboss7/crest/releases/download/v0.0.7/Crest-0.0.7.dmg">Download</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main">
+
+  <!-- ================= HERO ================= -->
+  <section class="hero" id="top">
+    <div class="wrap">
+      <p class="eyebrow">Crest for Mac</p>
+      <h1>
+        <span class="line"><span>Your day has a <span class="grad">rhythm</span>.</span></span>
+        <span class="line"><span>Keep it.</span></span>
+      </h1>
+      <p class="lead">
+        Crest lives quietly in your menu bar and speaks up at exactly the right moment.
+        <strong>Meetings never start without you. Prayers never slip past you.</strong>
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/saiftheboss7/crest/releases/download/v0.0.7/Crest-0.0.7.dmg">Download for Mac</a>
+        <a class="btn btn-secondary" href="https://github.com/saiftheboss7/crest">View on GitHub</a>
+      </div>
+      <p class="fineprint">Free and open source · macOS 15 or later · Apple Silicon and Intel</p>
+
+      <div class="hero-visual" role="img" aria-label="The macOS menu bar showing Crest's clock and next event, with a popover listing today's events and prayer times.">
+        <div class="menubar" aria-hidden="true">
+          <span class="spacer"><i></i><i></i><i></i></span>
+          <span class="mb-item">Standup in 10m</span>
+          <span class="mb-crest">☾ <span id="live-clock">Wed, Jul 23&nbsp; 6:45 PM</span></span>
+        </div>
+        <div class="popover" aria-hidden="true">
+          <div class="pop-row">
+            <div><div class="pop-title">Design review</div><div class="pop-sub">3:00 PM · Google Meet</div></div>
+            <span class="chip chip-join">Join</span>
+          </div>
+          <div class="pop-row">
+            <div><div class="pop-title">1:1 with Angie</div><div class="pop-sub">4:30 PM · Zoom</div></div>
+            <span class="chip chip-teal">in 2h</span>
+          </div>
+          <div class="pop-row">
+            <div><div class="pop-title">Asr</div><div class="pop-sub">4:44 PM · 21 Safar 1448 AH</div></div>
+            <span class="chip chip-teal" id="waqt-chip">2h 14m left</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MEETINGS ================= -->
+  <section id="meetings">
+    <div class="wrap split">
+      <div class="story">
+        <p class="eyebrow reveal">Meetings</p>
+        <h2 class="reveal" style="--d:.05s">Never walk in late again.</h2>
+        <p class="lead reveal" style="--d:.1s">
+          You were deep in something good. The notification slid by.
+          Now it's 9:07 and everyone is waiting.
+        </p>
+        <p class="reveal" style="--d:.15s">
+          When a meeting starts, Crest takes the whole screen, shows <strong>one button</strong>,
+          and gets out of the way. Join drops you straight into the right call.
+        </p>
+        <p class="reveal" style="--d:.2s">
+          Zoom, Google Meet, Teams, Webex, and more than fifty other services,
+          detected automatically from the invite. No setup, no per-app plugins.
+        </p>
+      </div>
+      <div class="device drift reveal" style="--glow-c: rgba(94,234,212,.16); --d:.15s" role="img" aria-label="Crest's full screen meeting alert: Design review is starting now, with a Join Meeting button and a countdown ring.">
+        <span class="glow" aria-hidden="true"></span>
+        <div class="ring-wrap" aria-hidden="true">
+          <svg width="108" height="108" viewBox="0 0 108 108" fill="none">
+            <circle class="ring-track" cx="54" cy="54" r="48" stroke-width="6"/>
+            <circle class="ring-arc" cx="54" cy="54" r="48" stroke-width="6"/>
+          </svg>
+          <span class="ring-num">0:40</span>
+        </div>
+        <h3 style="color:#fff">Design review</h3>
+        <p class="when">is starting now</p>
+        <div class="actions" aria-hidden="true">
+          <span class="act act-green">Join Meeting</span>
+          <span class="act">Dismiss</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PRAYER ================= -->
+  <section class="section-alt" id="prayer">
+    <div class="wrap split">
+      <div class="device drift reveal" style="--d:.15s" role="img" aria-label="Crest's full screen prayer reminder with a teal glow: Time for Asr at 4:44 PM, waqt ending countdown, and Mark as Prayed and snooze buttons. Below it, a golden jamaat reminder chip.">
+        <span class="glow" aria-hidden="true"></span>
+        <div class="emoji-disc" aria-hidden="true">🌤️</div>
+        <h3>Time for Asr 🤲</h3>
+        <p class="when">4:44 PM</p>
+        <p class="pill" aria-hidden="true">⏱ Waqt ends in <span id="waqt-count">2h 14m 32s</span></p>
+        <div class="actions" aria-hidden="true">
+          <span class="act act-green">Mark as Prayed</span>
+          <span class="act">Remind in 15m</span>
+          <span class="act">Dismiss</span>
+        </div>
+        <div class="jamaat-note" style="color:#c9a248" aria-hidden="true">🕌 Jamaat at 5:00 PM · its own golden reminder</div>
+      </div>
+      <div class="story">
+        <p class="eyebrow reveal">Prayer times</p>
+        <h2 class="reveal" style="--d:.05s">Work gets loud. Prayer stays quiet.</h2>
+        <p class="lead reveal" style="--d:.1s">
+          Between calls and deadlines, Asr can slip away without a sound.
+          Crest gives every prayer a voice.
+        </p>
+        <p class="reveal" style="--d:.15s">
+          When the waqt begins, a <strong>calm teal reminder</strong> fills the screen.
+          When the window is closing, a <strong>firmer amber warning</strong> steps in before it's too late.
+          And jamaat gets its own golden reminder, timed to your mosque.
+        </p>
+        <p class="reveal" style="--d:.2s">
+          Times are calculated on your Mac with the Adhan library, with your choice of
+          calculation method, madhab, and per-prayer adjustments. Even the Hijri date
+          respects your local moon sighting.
+        </p>
+        <p class="note reveal" style="--d:.25s">Islamic Mode is optional and off by default.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CALENDAR ================= -->
+  <section id="schedule">
+    <div class="wrap" style="text-align:center">
+      <p class="eyebrow reveal">Your schedule</p>
+      <h2 class="reveal" style="--d:.05s">Stop hunting for your own calendar.</h2>
+      <p class="lead reveal" style="margin:0 auto; --d:.1s">
+        Your next event sits right beside the clock, and the whole month is one click away.
+        Google Calendar works out of the box through macOS. <strong>No sign-in, no OAuth, no browser tab.</strong>
+      </p>
+
+      <div class="grid-6">
+        <div class="cell reveal" style="--d:.05s"><span class="ico" aria-hidden="true">😴</span><h4>Wakes up with you</h4><p>Slept through a reminder? If its moment still stands when your Mac wakes, it fires. If not, it stays quiet.</p></div>
+        <div class="cell reveal" style="--d:.1s"><span class="ico" aria-hidden="true">⏰</span><h4>Snooze that behaves</h4><p>Five, ten, or fifteen minutes. It actually comes back, and it never nags past the point of being useful.</p></div>
+        <div class="cell reveal" style="--d:.15s"><span class="ico" aria-hidden="true">🌙</span><h4>Hijri, at a glance</h4><p>The Islamic date in your popover and menu bar, with an offset for local moon sighting.</p></div>
+        <div class="cell reveal" style="--d:.2s"><span class="ico" aria-hidden="true">🔕</span><h4>Focus aware</h4><p>Respects Do Not Disturb when you ask it to, and can break through for the moments that matter most.</p></div>
+        <div class="cell reveal" style="--d:.25s"><span class="ico" aria-hidden="true">🔔</span><h4>Hourly chime</h4><p>An optional, gentle tick of the clock to keep you anchored in the day.</p></div>
+        <div class="cell reveal" style="--d:.3s"><span class="ico" aria-hidden="true">🔄</span><h4>Quiet updates</h4><p>New versions arrive on their own via Sparkle. No installers to chase.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PRIVACY ================= -->
+  <section class="section-alt" id="privacy">
+    <div class="wrap" style="text-align:center">
+      <p class="eyebrow reveal">Privacy</p>
+      <h2 class="reveal" style="--d:.05s">Nothing leaves your Mac.</h2>
+      <p class="lead reveal" style="margin:0 auto; --d:.1s">
+        No account. No server. No analytics. Your calendar stays inside macOS,
+        prayer times are computed on device, and the only thing Crest ever fetches
+        is its own update.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= SADAQAH ================= -->
+  <section class="sadaqah">
+    <div class="wrap">
+      <blockquote class="reveal">
+        Crest is free, open source, and built as <em>sadaqah jariyah</em>,
+        an ongoing act of charity. If it helps you keep your rhythm,
+        pass it along to someone who needs theirs back.
+      </blockquote>
+      <p class="reveal" style="--d:.1s">Contributions, translations, and du'as are all welcome.</p>
+    </div>
+  </section>
+
+  <!-- ================= CLOSING ================= -->
+  <section class="closing section-alt" id="download">
+    <div class="wrap">
+      <h2 class="reveal">Keep your <span class="grad">rhythm</span>.</h2>
+      <p class="lead reveal" style="--d:.08s">Two megabytes. Free forever. Quietly yours.</p>
+      <div class="cta-row reveal" style="--d:.16s">
+        <a class="btn btn-primary" href="https://github.com/saiftheboss7/crest/releases/download/v0.0.7/Crest-0.0.7.dmg">Download Crest v0.0.7</a>
+        <a class="btn btn-secondary" href="https://github.com/saiftheboss7/crest/releases">All releases</a>
+      </div>
+      <p class="fineprint reveal" style="--d:.22s">
+        First launch: right-click Crest, choose Open, then Open again.
+        That's macOS being careful with unsigned apps, and it only happens once.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>☾ Crest · a menu bar companion for macOS</p>
+    <nav aria-label="Footer">
+      <a href="https://github.com/saiftheboss7/crest">GitHub</a>
+      <a href="https://github.com/saiftheboss7/crest/issues">Report an issue</a>
+      <a href="https://github.com/saiftheboss7/crest/blob/main/LICENSE">License</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* Nav hairline + blur after scrolling */
+    var nav = document.getElementById('nav');
+    var onScroll = function () { nav.classList.toggle('scrolled', window.scrollY > 24); };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    /* Reveal on scroll */
+    var revealEls = document.querySelectorAll('.reveal');
+    if (reduceMotion || !('IntersectionObserver' in window)) {
+      revealEls.forEach(function (el) { el.classList.add('in'); });
+    } else {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.18, rootMargin: '0px 0px -6% 0px' });
+      revealEls.forEach(function (el) { io.observe(el); });
+    }
+
+    /* Live clock in the menu bar mockup (decorative, aria-hidden) */
+    var clock = document.getElementById('live-clock');
+    function tickClock() {
+      var now = new Date();
+      var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      var h = now.getHours(), m = now.getMinutes();
+      var ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      clock.textContent = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate() +
+        ' ' + h + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+    }
+    if (clock) { tickClock(); setInterval(tickClock, 1000); }
+
+    /* Fake waqt countdown in the prayer mockup */
+    var count = document.getElementById('waqt-count');
+    if (count && !reduceMotion) {
+      var secs = 2 * 3600 + 14 * 60 + 32;
+      setInterval(function () {
+        secs = secs > 60 ? secs - 1 : 2 * 3600 + 14 * 60 + 32;
+        var hh = Math.floor(secs / 3600), mm = Math.floor((secs % 3600) / 60), ss = secs % 60;
+        count.textContent = hh + 'h ' + mm + 'm ' + ss + 's';
+      }, 1000);
+    }
+  })();
+</script>
+
+</body>
+</html>
