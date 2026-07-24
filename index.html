@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Crest for Mac. Notifications whisper. Crest doesn't.</title>
-<meta name="description" content="Crest takes your whole screen when a meeting starts or a prayer time arrives. Impossible to ignore, gone in one click. Free, open source, private by design. For Mac.">
-<meta property="og:title" content="Crest for Mac. Notifications whisper. Crest doesn't.">
-<meta property="og:description" content="Full screen reminders for meetings and prayer times that are impossible to miss. Free, open source, no account, everything on device.">
+<title>Crest for Mac. Notifications whisper. Crest goes full screen.</title>
+<meta name="description" content="Standard notifications rent a tiny corner for five seconds. Crest goes full screen until you act. Meetings and prayer times, unmissable by design. Free and open source for Mac.">
+<meta property="og:title" content="Crest for Mac. Notifications whisper. Crest goes full screen.">
+<meta property="og:description" content="Standard notifications rent a tiny corner for five seconds, then vanish. Crest takes the whole screen until you act. Free, open source, no account, everything on device.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://saiftheboss7.github.io/crest/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230F766E'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif'%3E%E2%98%BE%3C/text%3E%3C/svg%3E">
@@ -135,11 +135,105 @@
 
   /* ---------- Hero ---------- */
   .hero { padding: clamp(150px, 20vh, 215px) 0 clamp(70px, 9vw, 120px); text-align: center; }
-  .hero h1 { font-size: clamp(46px, 8.6vw, 102px); font-weight: 700; margin: 0 auto 26px; max-width: 12em; }
+  .hero h1 { position: relative; font-size: clamp(46px, 8.6vw, 102px); font-weight: 700; margin: 0 auto 26px; max-width: 12em; }
   .hero h1 .line { display: block; overflow: hidden; }
   .hero h1 .line > span { display: inline-block; transform: translateY(110%); animation: rise 1s var(--ease-out) forwards; }
-  .hero h1 .line:nth-child(2) > span { animation-delay: .12s; }
+  .hero h1 .line:nth-child(2) > span {
+    position: relative;
+    animation: rise 1s var(--ease-out) .12s forwards, stamp .55s var(--ease-out) 2.4s both;
+  }
   @keyframes rise { to { transform: translateY(0); } }
+
+  /* The takeover stamp: line 2 lands with a settle while the hero flinches */
+  @keyframes stamp {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.06); }
+    72% { transform: scale(.988); }
+    100% { transform: scale(1); }
+  }
+  .hero > .wrap { animation: heroshake .22s linear 2.62s; }
+  @keyframes heroshake {
+    0%, 100% { transform: translateX(0); }
+    28% { transform: translateX(2px); }
+    56% { transform: translateX(-2px); }
+    80% { transform: translateX(1px); }
+  }
+  /* One-time teal pulse behind the headline as the stamp lands */
+  .hero h1::before {
+    content: ""; position: absolute; inset: -14% -8%;
+    background: radial-gradient(closest-side, rgba(45, 212, 191, .22), transparent 72%);
+    opacity: 0; transform: scale(.7);
+    animation: heropulse .9s var(--ease-out) 2.45s both;
+    pointer-events: none; z-index: -1;
+  }
+  @keyframes heropulse {
+    0% { opacity: 0; transform: scale(.7); }
+    35% { opacity: 1; }
+    100% { opacity: 0; transform: scale(1.22); }
+  }
+
+  /* "whisper" dissolves like breath, re-inks, and holds; loops forever */
+  .whisper { white-space: nowrap; }
+  .whisper > span {
+    display: inline-block;
+    animation: whisp 7s ease-in-out calc(1.2s + var(--i) * 60ms) infinite;
+  }
+  @keyframes whisp {
+    0% { opacity: 1; filter: blur(0); transform: translateY(0); }
+    14%, 22% { opacity: .15; filter: blur(6px); transform: translateY(-14px); }
+    36%, 100% { opacity: 1; filter: blur(0); transform: translateY(0); }
+  }
+
+  /* Permanent marker ink under "full screen": drawn once, never leaves */
+  .ink { position: relative; }
+  .ink::after {
+    content: ""; position: absolute; left: -1%; right: -1%; bottom: .02em;
+    height: .09em; border-radius: 99px;
+    background: linear-gradient(90deg, var(--teal-400), var(--teal-700));
+    opacity: .9;
+    transform: scaleX(0); transform-origin: left center;
+    animation: inkdraw .5s var(--ease-out) 2.6s forwards;
+    z-index: -1;
+  }
+  @keyframes inkdraw { to { transform: scaleX(1); } }
+  .crest-inner.thick .ink::after { height: .15em; }
+  .crest-inner { display: inline-block; }
+  .crest-inner.bold { font-weight: 800; }
+  .crest-inner.shake { animation: headshake .35s ease; }
+  @keyframes headshake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-7px); }
+    45% { transform: translateX(6px); }
+    70% { transform: translateX(-3px); }
+    88% { transform: translateX(2px); }
+  }
+
+  /* The decoy close button that refuses to work */
+  .hero-x {
+    position: absolute; top: 50%; right: -1.55em;
+    transform: translateY(-50%);
+    display: grid; place-items: center;
+    width: .38em; height: .38em; min-width: 30px; min-height: 30px;
+    font-size: .22em; line-height: 1; font-family: var(--font);
+    color: var(--ink-3); background: rgba(0, 0, 0, .06);
+    border: 1px solid var(--hairline); border-radius: 50%;
+    cursor: pointer; padding: 0;
+    opacity: 0;
+    animation: xin .4s ease 3.1s forwards;
+    transition: background .2s ease, color .2s ease;
+  }
+  .hero-x:hover { background: rgba(0, 0, 0, .11); color: var(--ink); }
+  .hero-x.spent { opacity: .45 !important; cursor: default; }
+  @keyframes xin { to { opacity: 1; } }
+  @media (max-width: 640px) { .hero-x { display: none; } }
+
+  /* Caption that appears when someone tries to dismiss the headline */
+  .hero-caption {
+    min-height: 26px; margin: -6px 0 10px;
+    font-size: 15px; font-weight: 600; color: var(--teal-700);
+    opacity: 0; transition: opacity .45s ease;
+  }
+  .hero-caption.show { opacity: 1; }
 
   .grad {
     background: linear-gradient(96deg, var(--teal-700), var(--teal-400) 60%, var(--gold));
@@ -512,12 +606,14 @@
     <div class="wrap">
       <p class="eyebrow">Crest for Mac · Free and open source</p>
       <h1>
-        <span class="line"><span>Notifications whisper.</span></span>
-        <span class="line"><span><span class="grad">Crest</span> doesn't.</span></span>
+        <span class="line"><span>Notifications <span class="whisper"><span style="--i:0">w</span><span style="--i:1">h</span><span style="--i:2">i</span><span style="--i:3">s</span><span style="--i:4">p</span><span style="--i:5">e</span><span style="--i:6">r</span><span style="--i:7">.</span></span></span></span>
+        <span class="line"><span><span class="crest-inner" id="crest-inner"><span class="grad">Crest</span> goes <span class="ink">full&nbsp;screen</span>.</span><button class="hero-x" id="hero-x" aria-label="Try to dismiss Crest's reminder" hidden>&times;</button></span></span>
       </h1>
+      <p class="hero-caption" id="hero-caption" role="status"></p>
       <p class="lead">
-        When a meeting starts or a prayer time arrives, Crest takes your <strong>whole screen</strong>
-        until you act. Impossible to ignore. Gone in one click.
+        Standard notifications rent a tiny corner for five seconds, then vanish
+        like they were never there. Crest takes the <strong>whole screen</strong> until you act.
+        Unmissable, by design.
       </p>
       <div class="cta-row">
         <a class="btn btn-primary" href="https://github.com/saiftheboss7/crest/releases/download/v0.0.7/Crest-0.0.7.dmg">Download for Mac, it's free</a>
@@ -906,6 +1002,31 @@
         ' ' + h + ':' + String(m).padStart(2, '0') + ' ' + ampm;
     }
     if (clock) { tickClock(); setInterval(tickClock, 1000); }
+
+    /* The decoy close button: trying to dismiss the headline only proves it */
+    var xBtn = document.getElementById('hero-x');
+    var crestInner = document.getElementById('crest-inner');
+    var caption = document.getElementById('hero-caption');
+    if (xBtn && crestInner && caption) {
+      xBtn.hidden = false;
+      var tries = 0;
+      xBtn.addEventListener('click', function () {
+        if (xBtn.classList.contains('spent')) { return; }
+        tries++;
+        if (!reduceMotion) {
+          crestInner.classList.remove('shake');
+          void crestInner.offsetWidth;
+          crestInner.classList.add('shake');
+        }
+        crestInner.classList.add('bold');
+        if (tries >= 2) {
+          crestInner.classList.add('thick');
+          caption.textContent = "Exactly. That's the point.";
+          caption.classList.add('show');
+          xBtn.classList.add('spent');
+        }
+      });
+    }
 
     /* Ticking waqt countdown in the ending reminder mockup */
     var count = document.getElementById('waqt-count');
