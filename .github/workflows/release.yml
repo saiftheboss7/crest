@@ -153,16 +153,18 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Create a temporary directory for gh-pages content
-          mkdir -p gh_pages_deploy
+          # gh-pages also hosts the landing page (index.html and friends), so
+          # never rebuild the branch from scratch: check out the existing
+          # branch, replace only appcast.xml, and push a normal commit.
+          git fetch origin gh-pages
+          git worktree add gh_pages_deploy origin/gh-pages
           cp appcast.xml gh_pages_deploy/
 
           cd gh_pages_deploy
-          git init
+          git checkout -b gh-pages
           git add appcast.xml
           git commit -m "Update appcast for v${{ steps.version.outputs.VERSION }}"
-          git branch -M gh-pages
-          git push --force "https://x-access-token:${{ github.token }}@github.com/saiftheboss7/crest.git" gh-pages
+          git push "https://x-access-token:${{ github.token }}@github.com/saiftheboss7/crest.git" gh-pages:gh-pages
 
       - name: Update Homebrew Cask
         env:
