@@ -4,11 +4,29 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Crest for Mac. Notifications whisper. Crest goes full screen.</title>
-<meta name="description" content="Standard notifications rent a tiny corner for five seconds. Crest goes full screen until you act. Meetings and prayer times, unmissable by design. Free and open source for Mac.">
-<meta property="og:title" content="Crest for Mac. Notifications whisper. Crest goes full screen.">
-<meta property="og:description" content="Standard notifications rent a tiny corner for five seconds, then vanish. Crest takes the whole screen until you act. Free, open source, no account, everything on device.">
+<meta name="description" content="Crest goes full screen when a meeting starts, so you can't miss it. Prayer times are an optional feature, turned off by default. Free, open source, 2 MB, for macOS 15 and later.">
+<link rel="canonical" href="https://saiftheboss7.github.io/crest/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="author" content="Saif Hassan">
+<meta name="application-name" content="Crest">
+<meta name="theme-color" content="#fbfbfd">
+
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Crest">
+<meta property="og:locale" content="en_US">
 <meta property="og:url" content="https://saiftheboss7.github.io/crest/">
+<meta property="og:title" content="Crest for Mac. Notifications whisper. Crest goes full screen.">
+<meta property="og:description" content="Full screen reminders that are impossible to miss: meetings with one-click join, plus optional prayer times (off by default). Free and open source.">
+<meta property="og:image" content="https://saiftheboss7.github.io/crest/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Notifications whisper. Crest goes full screen. Crest for Mac, free and open source.">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Crest for Mac. Notifications whisper. Crest goes full screen.">
+<meta name="twitter:description" content="Full screen reminders that are impossible to miss: meetings with one-click join, plus optional prayer times (off by default). Free and open source.">
+<meta name="twitter:image" content="https://saiftheboss7.github.io/crest/og.png">
+<meta name="twitter:image:alt" content="Notifications whisper. Crest goes full screen. Crest for Mac, free and open source.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230F766E'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif'%3E%E2%98%BE%3C/text%3E%3C/svg%3E">
 <style>
   /* ---------- Reset & tokens ---------- */
@@ -112,6 +130,7 @@
   }
   .lead strong { color: var(--ink); font-weight: 600; }
   .center .lead { margin-left: auto; margin-right: auto; }
+  .optnote { font-size: 14.5px; color: var(--ink-3); margin: 16px auto 0; max-width: 44em; }
 
   .split { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(40px, 6vw, 90px); align-items: center; }
   @media (max-width: 860px) { .split { grid-template-columns: 1fr; } .split .device { order: 2; } }
@@ -576,6 +595,71 @@
   }
 </style>
 <noscript><style>.reveal { opacity: 1; transform: none; }</style></noscript>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://saiftheboss7.github.io/crest/#app",
+      "name": "Crest",
+      "operatingSystem": "macOS 15.0 or later",
+      "applicationCategory": "ProductivityApplication",
+      "description": "A menu bar companion for macOS that shows unmissable full screen reminders for meetings, with one-click join for 50+ conferencing services. Prayer times are an optional feature, turned off by default. Everything is computed on device; no account and no data collection.",
+      "url": "https://saiftheboss7.github.io/crest/",
+      "downloadUrl": "https://github.com/saiftheboss7/crest/releases/download/v0.0.7/Crest-0.0.7.dmg",
+      "installUrl": "https://github.com/saiftheboss7/crest/releases/latest",
+      "softwareVersion": "0.0.7",
+      "fileSize": "2.3 MB",
+      "image": "https://saiftheboss7.github.io/crest/og.png",
+      "screenshot": "https://saiftheboss7.github.io/crest/og.png",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "license": "https://github.com/saiftheboss7/crest/blob/main/LICENSE",
+      "author": { "@type": "Person", "name": "Saif Hassan", "url": "https://github.com/saiftheboss7" },
+      "sameAs": ["https://github.com/saiftheboss7/crest"],
+      "featureList": [
+        "Full screen meeting alerts with one-click join for Zoom, Google Meet, Teams, Webex, and 50+ services",
+        "Menu bar calendar with month popover and next-event label",
+        "Optional prayer times, off by default: start and ending reminders, jamaat times, Hijri date",
+        "On-device calculation, no account, no analytics",
+        "Snooze, Do Not Disturb awareness, sleep and wake catch-up",
+        "Automatic updates via Sparkle"
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://saiftheboss7.github.io/crest/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is it really free?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Really. Crest is open source and built as sadaqah jariyah, an ongoing act of charity. No trial, no premium tier, no catch. If it helps you, share it with someone." }
+        },
+        {
+          "@type": "Question",
+          "name": "Does it work with Google Calendar?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. Crest reads whatever calendars macOS knows about, including Google, iCloud, and Outlook accounts you've added to the system. No OAuth screens, no separate sign-in." }
+        },
+        {
+          "@type": "Question",
+          "name": "I'm not Muslim. Is Crest still for me?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Absolutely. The prayer layer is optional and off by default. Out of the box, Crest is a fast menu bar calendar with unmissable meeting alerts." }
+        },
+        {
+          "@type": "Question",
+          "name": "Won't a full screen takeover annoy me?",
+          "acceptedAnswer": { "@type": "Answer", "text": "That's the point, but only for the moments you choose. Everything is opt-in per prayer and per alert type, snooze is always one keystroke away, and Crest can respect Do Not Disturb." }
+        },
+        {
+          "@type": "Question",
+          "name": "Why does macOS warn me on first launch?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Crest isn't notarized with Apple yet, so macOS is being careful. Right-click the app, choose Open, then Open again. It happens exactly once, and the code is public if you'd like to check what you're running." }
+        }
+      ]
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -775,6 +859,10 @@
         <p class="lead reveal" style="--d:.1s">
           Crest computes all five prayers on your Mac and stands guard over each one.
           Two reminders. One purpose: <strong>pray on time.</strong>
+        </p>
+        <p class="optnote reveal" style="--d:.15s">
+          Prayer times are an optional feature, turned off by default.
+          Without them, Crest is simply a very punctual meetings app.
         </p>
       </div>
 
