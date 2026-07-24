@@ -209,6 +209,82 @@
   .chip-teal { background: rgba(15,118,110,.12); color: var(--teal-700); }
   .chip-join { background: var(--teal-700); color: #fff; }
 
+  /* ---------- Before / After illustration ---------- */
+  .ba-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 54px; text-align: left; }
+  @media (max-width: 860px) { .ba-grid { grid-template-columns: 1fr; } }
+  .ba { background: #fff; border: 1px solid var(--hairline); border-radius: var(--radius-md); padding: 18px; }
+  .ba figcaption { margin-bottom: 14px; }
+  .ba-tag {
+    display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; padding: 5px 12px; border-radius: 999px;
+  }
+  .ba-tag-miss { background: rgba(255, 124, 124, .16); color: #a03a2b; }
+  .ba-tag-win { background: rgba(15, 118, 110, .12); color: var(--teal-700); }
+  .ba-screen {
+    position: relative; overflow: hidden; height: 240px;
+    border-radius: 12px; border: 1px solid var(--hairline); background: #eef0f4;
+  }
+  .ba-window {
+    position: absolute; inset: 26px 26px 0 26px;
+    background: #fff; border: 1px solid var(--hairline);
+    border-radius: 10px 10px 0 0; padding: 12px 14px;
+  }
+  .ba-dots { display: flex; gap: 6px; margin-bottom: 12px; }
+  .ba-dots i { width: 8px; height: 8px; border-radius: 50%; background: #e3e3e8; }
+  .ba-line {
+    height: 9px; border-radius: 5px; margin-bottom: 9px;
+    background: linear-gradient(90deg, #ececf1 25%, #f7f7fa 45%, #ececf1 65%);
+    background-size: 220% 100%;
+    animation: shimmerline 2.4s linear infinite;
+  }
+  @keyframes shimmerline { from { background-position: 130% 0; } to { background-position: -90% 0; } }
+  .ba-toast {
+    position: absolute; top: 12px; right: 12px;
+    display: flex; gap: 8px; align-items: center;
+    background: rgba(255,255,255,.96); border: 1px solid var(--hairline);
+    border-radius: 10px; padding: 8px 12px;
+    font-size: 11.5px; font-weight: 600;
+    box-shadow: 0 6px 18px rgba(0,0,0,.10);
+    animation: toast 8s ease-in-out infinite;
+  }
+  @keyframes toast {
+    0% { opacity: 0; transform: translateX(46px); }
+    6%, 28% { opacity: 1; transform: translateX(0); }
+    36%, 100% { opacity: 0; transform: translateX(46px); }
+  }
+  .ba-missed {
+    position: absolute; left: 12px; bottom: 12px;
+    font-size: 11.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px;
+    background: rgba(255, 124, 124, .18); color: #a03a2b;
+    animation: missed 8s ease-in-out infinite;
+  }
+  @keyframes missed {
+    0%, 46% { opacity: 0; transform: translateY(6px); }
+    54%, 100% { opacity: 1; transform: translateY(0); }
+  }
+  .ba-screen-dark { background: var(--card-dark); display: grid; place-items: center; }
+  .ba-overlay { position: relative; text-align: center; width: 100%; padding: 0 16px; }
+  .ba-overlay .glow {
+    position: absolute; inset: -120px;
+    background: radial-gradient(circle at 50% 45%, rgba(94,234,212,.18), transparent 62%);
+    animation: breathe 6s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .ba-overlay h5 { position: relative; font-size: 21px; font-weight: 650; letter-spacing: -.01em; color: #fff; }
+  .ba-overlay .when { position: relative; font-size: 13px; font-weight: 300; color: rgba(255,255,255,.85); margin: 3px 0 14px; }
+  .ba-overlay .act {
+    position: relative; display: inline-block;
+    font-size: 12.5px; font-weight: 600; padding: 9px 20px; border-radius: 999px;
+    background: var(--teal-700); color: #fff;
+    box-shadow: 0 8px 24px rgba(15, 118, 110, .45);
+  }
+  .ba-ontime {
+    position: absolute; left: 12px; bottom: 12px;
+    font-size: 11.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px;
+    background: rgba(74, 222, 128, .16); color: #4ade80;
+  }
+  .ba-cap { font-size: 13.5px; color: var(--ink-3); margin-top: 12px; }
+
   /* ---------- Problem cards ---------- */
   .prob-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 54px; text-align: left; }
   @media (max-width: 860px) { .prob-grid { grid-template-columns: 1fr; } }
@@ -284,8 +360,13 @@
   .story p { font-size: 17px; color: var(--ink-2); max-width: 32em; margin-top: 16px; text-wrap: pretty; }
   .story p strong { color: var(--ink); font-weight: 600; }
   .story .note { font-size: 14px; color: var(--ink-3); margin-top: 22px; }
-  .story .minicta { display: inline-block; margin-top: 24px; font-size: 16px; font-weight: 600; color: var(--teal-700); text-decoration: none; }
-  .story .minicta:hover { text-decoration: underline; }
+  .minicta { display: inline-block; margin-top: 24px; font-size: 16px; font-weight: 600; color: var(--teal-700); text-decoration: none; }
+  .minicta:hover { text-decoration: underline; }
+
+  /* Full-width device (Meetings) + centered follow-up copy */
+  .device-wide { max-width: 860px; margin: clamp(44px, 6vw, 68px) auto; padding: clamp(40px, 5vw, 64px); }
+  .section-copy { font-size: 17px; color: var(--ink-2); max-width: 38em; margin: 16px auto 0; text-wrap: pretty; }
+  .section-copy strong { color: var(--ink); font-weight: 600; }
 
   .beat-gap { margin-top: clamp(64px, 8vw, 110px); }
 
@@ -451,6 +532,39 @@
         and vanish. Which is exactly why you keep missing things that matter.
       </p>
 
+      <div class="ba-grid reveal" style="--d:.1s" role="img" aria-label="Before and after comparison. Without Crest, a small meeting notification slides away unnoticed while you keep working and the meeting is missed. With Crest, the whole screen shows the meeting with a Join button and you get in on time.">
+        <figure class="ba" aria-hidden="true">
+          <figcaption><span class="ba-tag ba-tag-miss">Without Crest</span></figcaption>
+          <div class="ba-screen">
+            <div class="ba-window">
+              <div class="ba-dots"><i></i><i></i><i></i></div>
+              <div class="ba-line" style="width:82%"></div>
+              <div class="ba-line" style="width:64%"></div>
+              <div class="ba-line" style="width:74%"></div>
+              <div class="ba-line" style="width:48%"></div>
+              <div class="ba-line" style="width:69%"></div>
+              <div class="ba-line" style="width:31%"></div>
+            </div>
+            <div class="ba-toast">🗓 Design review · starts now</div>
+            <div class="ba-missed">9:07 · meeting missed</div>
+          </div>
+          <p class="ba-cap">The banner slides away. So does the meeting.</p>
+        </figure>
+        <figure class="ba" aria-hidden="true">
+          <figcaption><span class="ba-tag ba-tag-win">With Crest</span></figcaption>
+          <div class="ba-screen ba-screen-dark">
+            <div class="ba-overlay">
+              <span class="glow" aria-hidden="true"></span>
+              <h5>Design review</h5>
+              <p class="when">is starting now</p>
+              <span class="act act-teal">Join Meeting</span>
+            </div>
+            <div class="ba-ontime">9:00 · joined on time</div>
+          </div>
+          <p class="ba-cap">The screen is the reminder. One click and you're in.</p>
+        </figure>
+      </div>
+
       <div class="prob-grid">
         <div class="prob reveal" style="--d:.05s">
           <span class="ico" aria-hidden="true">💬</span>
@@ -474,25 +588,16 @@
   </section>
 
   <!-- ================= MEETINGS ================= -->
-  <section id="meetings">
-    <div class="wrap split">
-      <div class="story">
-        <p class="eyebrow reveal">Meetings</p>
-        <h2 class="reveal" style="--d:.05s">Impossible to be late.</h2>
-        <p class="lead reveal" style="--d:.1s">
-          At meeting time, your screen shows exactly one thing: the way in.
-        </p>
-        <p class="reveal" style="--d:.15s">
-          <strong>Join</strong> drops you straight into the call. Zoom, Google Meet, Teams, Webex,
-          and 50+ other services, detected automatically from the invite. No setup, no plugins.
-        </p>
-        <p class="reveal" style="--d:.2s">
-          A countdown gives you a moment to land the plane, then Crest steps aside
-          the instant you click. Back to work, on time, every time.
-        </p>
-        <a class="minicta reveal" style="--d:.25s" href="https://github.com/saiftheboss7/crest/releases/download/v0.0.7/Crest-0.0.7.dmg">Download Crest and be early for once &rarr;</a>
-      </div>
-      <div class="device drift reveal" style="--glow-c: rgba(94,234,212,.16); --d:.15s" role="img" aria-label="Crest's full screen meeting alert: Design review is starting now, with a circular countdown and a single Join Meeting button.">
+  <section id="meetings" class="center">
+    <div class="wrap">
+      <p class="eyebrow reveal">Meetings</p>
+      <h2 class="reveal" style="--d:.05s">Impossible to be late.</h2>
+      <p class="lead reveal" style="--d:.1s">
+        At meeting time, a full screen reminder shows exactly one thing,
+        so you don't miss the way in.
+      </p>
+
+      <div class="device device-wide drift reveal" style="--glow-c: rgba(94,234,212,.16); --d:.15s" role="img" aria-label="Crest's full screen meeting alert: Design review is starting now, with a circular countdown and a single Join Meeting button.">
         <span class="glow" aria-hidden="true"></span>
         <div class="ring-wrap" aria-hidden="true">
           <svg width="116" height="116" viewBox="0 0 116 116" fill="none">
@@ -507,6 +612,16 @@
           <span class="act act-teal">Join Meeting</span>
         </div>
       </div>
+
+      <p class="section-copy reveal" style="--d:.1s">
+        <strong>Join</strong> drops you straight into the call. Zoom, Google Meet, Teams, Webex,
+        and 50+ other services, detected automatically from the invite. No setup, no plugins.
+      </p>
+      <p class="section-copy reveal" style="--d:.15s">
+        A countdown gives you a moment to land the plane, then Crest steps aside
+        the instant you click. Back to work, on time, every time.
+      </p>
+      <a class="minicta reveal" style="--d:.2s" href="https://github.com/saiftheboss7/crest/releases/download/v0.0.7/Crest-0.0.7.dmg">Download Crest and be early for once &rarr;</a>
     </div>
   </section>
 
