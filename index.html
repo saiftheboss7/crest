@@ -17,7 +17,7 @@
 <meta property="og:url" content="https://saiftheboss7.github.io/crest/">
 <meta property="og:title" content="Crest for Mac. Notifications whisper. Crest goes full screen.">
 <meta property="og:description" content="Full screen reminders that are impossible to miss: meetings with one-click join, plus optional prayer times (off by default). Free and open source.">
-<meta property="og:image" content="https://saiftheboss7.github.io/crest/og.png">
+<meta property="og:image" content="https://saiftheboss7.github.io/crest/og-card.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Notifications whisper. Crest goes full screen. Crest for Mac, free and open source.">
@@ -25,7 +25,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Crest for Mac. Notifications whisper. Crest goes full screen.">
 <meta name="twitter:description" content="Full screen reminders that are impossible to miss: meetings with one-click join, plus optional prayer times (off by default). Free and open source.">
-<meta name="twitter:image" content="https://saiftheboss7.github.io/crest/og.png">
+<meta name="twitter:image" content="https://saiftheboss7.github.io/crest/og-card.png">
 <meta name="twitter:image:alt" content="Notifications whisper. Crest goes full screen. Crest for Mac, free and open source.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230F766E'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif'%3E%E2%98%BE%3C/text%3E%3C/svg%3E">
 <style>
@@ -155,6 +155,8 @@
   /* ---------- Hero ---------- */
   .hero { padding: clamp(150px, 20vh, 215px) 0 clamp(70px, 9vw, 120px); text-align: center; }
   .hero h1 { position: relative; font-size: clamp(46px, 8.6vw, 92px); font-weight: 700; margin: 0 auto 26px; max-width: 13em; }
+  /* Very narrow phones: keep "Notifications" on one line within ~280px */
+  @media (max-width: 400px) { .hero h1 { font-size: 38px; } }
   .hero h1 .line { display: block; overflow: hidden; }
   .hero h1 .line > span { display: inline-block; transform: translateY(110%); animation: rise 1s var(--ease-out) forwards; }
   .hero h1 .line:nth-child(2) > span {
@@ -611,8 +613,8 @@
       "installUrl": "https://github.com/saiftheboss7/crest/releases/latest",
       "softwareVersion": "0.0.7",
       "fileSize": "2.3 MB",
-      "image": "https://saiftheboss7.github.io/crest/og.png",
-      "screenshot": "https://saiftheboss7.github.io/crest/og.png",
+      "image": "https://saiftheboss7.github.io/crest/og-card.png",
+      "screenshot": "https://saiftheboss7.github.io/crest/og-card.png",
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
       "license": "https://github.com/saiftheboss7/crest/blob/main/LICENSE",
       "author": { "@type": "Person", "name": "Saif Hassan", "url": "https://github.com/saiftheboss7" },
