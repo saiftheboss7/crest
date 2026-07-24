@@ -135,7 +135,7 @@
 
   /* ---------- Hero ---------- */
   .hero { padding: clamp(150px, 20vh, 215px) 0 clamp(70px, 9vw, 120px); text-align: center; }
-  .hero h1 { position: relative; font-size: clamp(46px, 8.6vw, 102px); font-weight: 700; margin: 0 auto 26px; max-width: 12em; }
+  .hero h1 { position: relative; font-size: clamp(46px, 8.6vw, 92px); font-weight: 700; margin: 0 auto 26px; max-width: 13em; }
   .hero h1 .line { display: block; overflow: hidden; }
   .hero h1 .line > span { display: inline-block; transform: translateY(110%); animation: rise 1s var(--ease-out) forwards; }
   .hero h1 .line:nth-child(2) > span {
@@ -180,8 +180,8 @@
   }
   @keyframes whisp {
     0% { opacity: 1; filter: blur(0); transform: translateY(0); }
-    14%, 22% { opacity: .15; filter: blur(6px); transform: translateY(-14px); }
-    36%, 100% { opacity: 1; filter: blur(0); transform: translateY(0); }
+    12%, 38% { opacity: .15; filter: blur(6px); transform: translateY(-14px); }
+    52%, 100% { opacity: 1; filter: blur(0); transform: translateY(0); }
   }
 
   /* Permanent marker ink under "full screen": drawn once, never leaves */
@@ -202,19 +202,19 @@
   .crest-inner.shake { animation: headshake .35s ease; }
   @keyframes headshake {
     0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-7px); }
-    45% { transform: translateX(6px); }
-    70% { transform: translateX(-3px); }
-    88% { transform: translateX(2px); }
+    18% { transform: translateX(-11px); }
+    42% { transform: translateX(10px); }
+    66% { transform: translateX(-6px); }
+    86% { transform: translateX(3px); }
   }
 
-  /* The decoy close button that refuses to work */
+  /* The decoy close button that refuses to work. Inline flow (never
+     clipped by the headline's overflow-hidden rise container). */
   .hero-x {
-    position: absolute; top: 50%; right: -1.55em;
-    transform: translateY(-50%);
-    display: grid; place-items: center;
-    width: .38em; height: .38em; min-width: 30px; min-height: 30px;
-    font-size: .22em; line-height: 1; font-family: var(--font);
+    display: inline-grid; place-items: center;
+    width: 34px; height: 34px; margin-left: .24em;
+    vertical-align: middle;
+    font-size: 17px; line-height: 1; font-family: var(--font);
     color: var(--ink-3); background: rgba(0, 0, 0, .06);
     border: 1px solid var(--hairline); border-radius: 50%;
     cursor: pointer; padding: 0;
@@ -225,7 +225,6 @@
   .hero-x:hover { background: rgba(0, 0, 0, .11); color: var(--ink); }
   .hero-x.spent { opacity: .45 !important; cursor: default; }
   @keyframes xin { to { opacity: 1; } }
-  @media (max-width: 640px) { .hero-x { display: none; } }
 
   /* Caption that appears when someone tries to dismiss the headline */
   .hero-caption {
@@ -235,14 +234,12 @@
   }
   .hero-caption.show { opacity: 1; }
 
+  /* Static brand gradient: pure teal, no drift, consistent from first paint */
   .grad {
-    background: linear-gradient(96deg, var(--teal-700), var(--teal-400) 60%, var(--gold));
-    background-size: 200% 100%;
+    background: linear-gradient(96deg, var(--teal-700), var(--teal-400));
     -webkit-background-clip: text; background-clip: text;
     -webkit-text-fill-color: transparent; color: transparent;
-    animation: shimmer 9s ease-in-out infinite alternate;
   }
-  @keyframes shimmer { to { background-position: 100% 0; } }
 
   .hero .lead { margin: 0 auto 40px; }
   .cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 18px; }
