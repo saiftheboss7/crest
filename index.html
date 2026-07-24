@@ -209,11 +209,19 @@
   .chip-teal { background: rgba(15,118,110,.12); color: var(--teal-700); }
   .chip-join { background: var(--teal-700); color: #fff; }
 
-  /* ---------- Before / After illustration ---------- */
-  .ba-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 54px; text-align: left; }
-  @media (max-width: 860px) { .ba-grid { grid-template-columns: 1fr; } }
-  .ba { background: #fff; border: 1px solid var(--hairline); border-radius: var(--radius-md); padding: 18px; }
-  .ba figcaption { margin-bottom: 14px; }
+  /* ---------- Before / After illustration (single split card) ---------- */
+  .ba {
+    background: #fff; border: 1px solid var(--hairline); border-radius: var(--radius-md);
+    padding: 18px; margin-top: 54px; text-align: left;
+  }
+  .ba-duo { display: grid; grid-template-columns: 1fr 1fr; }
+  .ba-half { padding: 8px 22px; }
+  .ba-half + .ba-half { border-left: 1px solid var(--hairline); }
+  @media (max-width: 860px) {
+    .ba-duo { grid-template-columns: 1fr; }
+    .ba-half + .ba-half { border-left: 0; border-top: 1px solid var(--hairline); margin-top: 20px; padding-top: 26px; }
+  }
+  .ba-half figcaption { margin-bottom: 14px; }
   .ba-tag {
     display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .06em;
     text-transform: uppercase; padding: 5px 12px; border-radius: 999px;
@@ -221,7 +229,7 @@
   .ba-tag-miss { background: rgba(255, 124, 124, .16); color: #a03a2b; }
   .ba-tag-win { background: rgba(15, 118, 110, .12); color: var(--teal-700); }
   .ba-screen {
-    position: relative; overflow: hidden; height: 240px;
+    position: relative; overflow: hidden; height: 250px;
     border-radius: 12px; border: 1px solid var(--hairline); background: #eef0f4;
   }
   .ba-window {
@@ -238,19 +246,29 @@
     animation: shimmerline 2.4s linear infinite;
   }
   @keyframes shimmerline { from { background-position: 130% 0; } to { background-position: -90% 0; } }
+
+  /* Without Crest: a big macOS-style banner that slides in, then away */
   .ba-toast {
-    position: absolute; top: 12px; right: 12px;
-    display: flex; gap: 8px; align-items: center;
-    background: rgba(255,255,255,.96); border: 1px solid var(--hairline);
-    border-radius: 10px; padding: 8px 12px;
-    font-size: 11.5px; font-weight: 600;
-    box-shadow: 0 6px 18px rgba(0,0,0,.10);
+    position: absolute; top: 14px; right: 14px;
+    width: min(80%, 310px); min-height: 40%;
+    display: flex; gap: 14px; align-items: center;
+    background: rgba(255,255,255,.97); border: 1px solid var(--hairline);
+    border-radius: 16px; padding: 16px 18px;
+    box-shadow: 0 16px 38px rgba(0,0,0,.16);
     animation: toast 8s ease-in-out infinite;
   }
+  .ba-toast-ico {
+    display: grid; place-items: center; flex: none;
+    width: 48px; height: 48px; font-size: 26px;
+    background: var(--teal-100); border-radius: 11px;
+  }
+  .ba-toast-txt { display: flex; flex-direction: column; gap: 3px; }
+  .ba-toast-txt b { font-size: 15px; letter-spacing: -.01em; }
+  .ba-toast-txt em { font-style: normal; font-size: 12.5px; color: var(--ink-3); }
   @keyframes toast {
-    0% { opacity: 0; transform: translateX(46px); }
-    6%, 28% { opacity: 1; transform: translateX(0); }
-    36%, 100% { opacity: 0; transform: translateX(46px); }
+    0%, 4% { opacity: 0; transform: translateX(52px); }
+    11%, 30% { opacity: 1; transform: translateX(0); }
+    38%, 100% { opacity: 0; transform: translateX(52px); }
   }
   .ba-missed {
     position: absolute; left: 12px; bottom: 12px;
@@ -259,21 +277,32 @@
     animation: missed 8s ease-in-out infinite;
   }
   @keyframes missed {
-    0%, 46% { opacity: 0; transform: translateY(6px); }
-    54%, 100% { opacity: 1; transform: translateY(0); }
+    0%, 48% { opacity: 0; transform: translateY(6px); }
+    56%, 100% { opacity: 1; transform: translateY(0); }
   }
-  .ba-screen-dark { background: var(--card-dark); display: grid; place-items: center; }
-  .ba-overlay { position: relative; text-align: center; width: 100%; padding: 0 16px; }
-  .ba-overlay .glow {
+
+  /* With Crest: the same window, then the overlay takes the whole screen */
+  .ba-takeover {
+    position: absolute; inset: 0; overflow: hidden;
+    display: grid; place-content: center; text-align: center;
+    background: var(--card-dark);
+    animation: takeover 8s ease-in-out infinite;
+  }
+  @keyframes takeover {
+    0%, 5% { opacity: 0; }
+    12%, 93% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  .ba-takeover .glow {
     position: absolute; inset: -120px;
     background: radial-gradient(circle at 50% 45%, rgba(94,234,212,.18), transparent 62%);
     animation: breathe 6s ease-in-out infinite;
     pointer-events: none;
   }
-  .ba-overlay h5 { position: relative; font-size: 21px; font-weight: 650; letter-spacing: -.01em; color: #fff; }
-  .ba-overlay .when { position: relative; font-size: 13px; font-weight: 300; color: rgba(255,255,255,.85); margin: 3px 0 14px; }
-  .ba-overlay .act {
-    position: relative; display: inline-block;
+  .ba-takeover h5 { position: relative; font-size: 21px; font-weight: 650; letter-spacing: -.01em; color: #fff; }
+  .ba-takeover .when { position: relative; font-size: 13px; font-weight: 300; color: rgba(255,255,255,.85); margin: 3px 0 14px; }
+  .ba-takeover .act {
+    position: relative; display: inline-block; justify-self: center;
     font-size: 12.5px; font-weight: 600; padding: 9px 20px; border-radius: 999px;
     background: var(--teal-700); color: #fff;
     box-shadow: 0 8px 24px rgba(15, 118, 110, .45);
@@ -282,6 +311,11 @@
     position: absolute; left: 12px; bottom: 12px;
     font-size: 11.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px;
     background: rgba(74, 222, 128, .16); color: #4ade80;
+    animation: ontime 8s ease-in-out infinite;
+  }
+  @keyframes ontime {
+    0%, 26% { opacity: 0; transform: translateY(6px); }
+    34%, 100% { opacity: 1; transform: translateY(0); }
   }
   .ba-cap { font-size: 13.5px; color: var(--ink-3); margin-top: 12px; }
 
@@ -532,37 +566,51 @@
         and vanish. Which is exactly why you keep missing things that matter.
       </p>
 
-      <div class="ba-grid reveal" style="--d:.1s" role="img" aria-label="Before and after comparison. Without Crest, a small meeting notification slides away unnoticed while you keep working and the meeting is missed. With Crest, the whole screen shows the meeting with a Join button and you get in on time.">
-        <figure class="ba" aria-hidden="true">
-          <figcaption><span class="ba-tag ba-tag-miss">Without Crest</span></figcaption>
-          <div class="ba-screen">
-            <div class="ba-window">
-              <div class="ba-dots"><i></i><i></i><i></i></div>
-              <div class="ba-line" style="width:82%"></div>
-              <div class="ba-line" style="width:64%"></div>
-              <div class="ba-line" style="width:74%"></div>
-              <div class="ba-line" style="width:48%"></div>
-              <div class="ba-line" style="width:69%"></div>
-              <div class="ba-line" style="width:31%"></div>
+      <div class="ba reveal" style="--d:.1s" role="img" aria-label="Before and after comparison in one frame. Without Crest, a large meeting notification slides into the corner of a work window, fades away unnoticed, and the meeting is missed. With Crest, the same window is taken over by a full screen alert with a Join Meeting button, and you get in on time.">
+        <div class="ba-duo" aria-hidden="true">
+          <figure class="ba-half">
+            <figcaption><span class="ba-tag ba-tag-miss">Without Crest</span></figcaption>
+            <div class="ba-screen">
+              <div class="ba-window">
+                <div class="ba-dots"><i></i><i></i><i></i></div>
+                <div class="ba-line" style="width:82%"></div>
+                <div class="ba-line" style="width:64%"></div>
+                <div class="ba-line" style="width:74%"></div>
+                <div class="ba-line" style="width:48%"></div>
+                <div class="ba-line" style="width:69%"></div>
+                <div class="ba-line" style="width:31%"></div>
+              </div>
+              <div class="ba-toast">
+                <span class="ba-toast-ico">🗓</span>
+                <span class="ba-toast-txt"><b>Design review</b><em>Starts now · Google Meet</em></span>
+              </div>
+              <div class="ba-missed">9:07 · meeting missed</div>
             </div>
-            <div class="ba-toast">🗓 Design review · starts now</div>
-            <div class="ba-missed">9:07 · meeting missed</div>
-          </div>
-          <p class="ba-cap">The banner slides away. So does the meeting.</p>
-        </figure>
-        <figure class="ba" aria-hidden="true">
-          <figcaption><span class="ba-tag ba-tag-win">With Crest</span></figcaption>
-          <div class="ba-screen ba-screen-dark">
-            <div class="ba-overlay">
-              <span class="glow" aria-hidden="true"></span>
-              <h5>Design review</h5>
-              <p class="when">is starting now</p>
-              <span class="act act-teal">Join Meeting</span>
+            <p class="ba-cap">The banner slides away. So does the meeting.</p>
+          </figure>
+          <figure class="ba-half">
+            <figcaption><span class="ba-tag ba-tag-win">With Crest</span></figcaption>
+            <div class="ba-screen">
+              <div class="ba-window">
+                <div class="ba-dots"><i></i><i></i><i></i></div>
+                <div class="ba-line" style="width:76%"></div>
+                <div class="ba-line" style="width:58%"></div>
+                <div class="ba-line" style="width:70%"></div>
+                <div class="ba-line" style="width:44%"></div>
+                <div class="ba-line" style="width:66%"></div>
+                <div class="ba-line" style="width:28%"></div>
+              </div>
+              <div class="ba-takeover">
+                <span class="glow"></span>
+                <h5>Design review</h5>
+                <p class="when">is starting now</p>
+                <span class="act">Join Meeting</span>
+                <div class="ba-ontime">9:00 · joined on time</div>
+              </div>
             </div>
-            <div class="ba-ontime">9:00 · joined on time</div>
-          </div>
-          <p class="ba-cap">The screen is the reminder. One click and you're in.</p>
-        </figure>
+            <p class="ba-cap">The screen is the reminder. One click and you're in.</p>
+          </figure>
+        </div>
       </div>
 
       <div class="prob-grid">
